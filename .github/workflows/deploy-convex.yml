@@ -1,0 +1,87 @@
+name: Deploy Convex
+
+# Runs on GitHub's runners, which have open outbound network access.
+# Tap Actions → "Deploy Convex" → "Run workflow" to deploy from anywhere,
+# including a phone.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    # Only when something the deployment actually contains has changed.
+    paths:
+      - "convex/**"
+      - "src/lib/auth/permissions.ts"
+      - "src/config/currencies.ts"
+      - "package-lock.json"
+      - ".github/workflows/deploy-convex.yml"
+
+concurrency:
+  group: convex-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Push schema and functions
+    runs-on: ubuntu-latest
+
+    # Secrets are lifted into env here because the `secrets` context is not
+    # available in step-level `if` conditions — referencing it there makes the
+    # whole workflow fail to start.
+    env:
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+      CLERK_JWT_ISSUER_DOMAIN: ${{ secrets.CLERK_JWT_ISSUER_DOMAIN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fail with a readable message rather than a confusing CLI error.
+      - name: Check the deploy key is configured
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
+            echo "::error::CONVEX_DEPLOY_KEY is not set. Add it under"
+            echo "::error::Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+
+      # Optional. Without it the deployment pushes with no auth provider and
+      # every authenticated function refuses with UNAUTHENTICATED — safe, but
+      # nobody can sign in. See convex/auth.config.ts.
+      - name: Configure the Clerk issuer domain
+        if: env.CLERK_JWT_ISSUER_DOMAIN != ''
+        run: npx convex env set CLERK_JWT_ISSUER_DOMAIN "$CLERK_JWT_ISSUER_DOMAIN"
+
+      # `convex deploy` targets a production deployment; a dev deployment is
+      # pushed with `convex dev --once`. The key's prefix says which we have,
+      # so one secret works for either without a second knob to get wrong.
+      - name: Deploy
+        run: |
+          case "$CONVEX_DEPLOY_KEY" in
+            dev:*)
+              echo "Dev deploy key detected — pushing with 'convex dev --once'."
+              npx convex dev --once
+              ;;
+            *)
+              echo "Production deploy key detected — pushing with 'convex deploy'."
+              npx convex deploy
+              ;;
+          esac
+
+      # Codegen output is committed, so drift means the checked-in
+      # convex/_generated no longer matches the schema. Reported, not fixed:
+      # pushing a correction would need repo write permissions this job should
+      # not have.
+      - name: Report any codegen drift
+        run: |
+          if ! git diff --quiet -- convex/_generated; then
+            echo "::warning::convex/_generated differs from generated output. Run 'npx convex dev' locally and commit the result."
+            git diff --stat -- convex/_generated
+          else
+            echo "convex/_generated matches the deployed schema."
+          fi
