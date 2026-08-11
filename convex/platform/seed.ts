@@ -15,6 +15,7 @@
 
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 
@@ -690,93 +691,150 @@ const SUPPLIERS = [
   },
 ];
 
-export const seedCatalogue = internalMutation({
-  args: { businessId: v.id("businesses") },
+/**
+ * One-shot demo setup for a fresh clone: catalogue, then trading history, for
+ * whichever business the caller names — or the only business, when there is
+ * exactly one, so a first-time setup needs no id lookup.
+ *
+ * Chains to `demoData.seedDemoBusiness` via the scheduler rather than calling
+ * it directly: the trading history is itself a scheduled chain (one mutation
+ * per simulated day), and scheduling here keeps this mutation's own
+ * transaction small regardless of how many days are requested.
+ */
+export const seedDemo = internalMutation({
+  args: { businessId: v.optional(v.id("businesses")), days: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const business = await ctx.db.get(args.businessId);
-    if (!business) throw new Error("Business not found");
+    let businessId = args.businessId;
 
-    // Refuse to touch a business that already has a catalogue.
-    const existing = await ctx.db
-      .query("products")
-      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
-      .first();
-    if (existing) {
-      return { skipped: true, reason: "This business already has products." };
-    }
-
-    const location = await ctx.db
-      .query("locations")
-      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
-      .first();
-    if (!location) throw new Error("Business has no location");
-
-    const owner = await ctx.db.get(business.ownerUserId);
-    if (!owner) throw new Error("Business has no owner");
-
-    for (const supplier of SUPPLIERS) {
-      await ctx.db.insert("suppliers", {
-        businessId: args.businessId,
-        name: supplier.name,
-        contactName: supplier.contactName,
-        phone: supplier.phone,
-        isActive: true,
-      });
-    }
-
-    let categoryCount = 0;
-    let productCount = 0;
-
-    for (const [index, group] of CATALOGUE.entries()) {
-      const categoryId = await ctx.db.insert("categories", {
-        businessId: args.businessId,
-        name: group.category,
-        sortOrder: index,
-        isActive: true,
-      });
-      categoryCount++;
-
-      for (const item of group.products) {
-        const productId = await ctx.db.insert("products", {
-          businessId: args.businessId,
-          name: item.name,
-          sku: item.sku,
-          barcode: item.barcode,
-          categoryId,
-          unit: item.unit,
-          costPriceMinor: item.cost,
-          sellingPriceMinor: item.price,
-          currency: business.currency,
-          taxRateId: business.settings.defaultTaxRateId,
-          trackInventory: true,
-          lowStockThreshold: item.lowStockThreshold,
-          isActive: true,
-        });
-        productCount++;
-
-        const threshold =
-          item.lowStockThreshold ?? business.settings.lowStockDefaultThreshold;
-
-        await seedStock(ctx, {
-          businessId: args.businessId,
-          locationId: location._id,
-          productId,
-          quantity: item.stock,
-          unitCostMinor: item.cost,
-          threshold,
-          actorUserId: owner._id,
-        });
+    if (!businessId) {
+      const businesses = await ctx.db.query("businesses").take(2);
+      if (businesses.length === 0) {
+        throw new Error(
+          "No business exists yet. Sign up and complete onboarding first, " +
+            "then re-run this with no businessId, or pass one explicitly.",
+        );
       }
+      if (businesses.length > 1) {
+        throw new Error(
+          "More than one business exists — pass businessId explicitly. " +
+            "Find it in the Convex dashboard's Data tab, businesses table.",
+        );
+      }
+      businessId = businesses[0]!._id;
     }
+
+    const catalogue = await seedCatalogueFor(ctx, businessId);
+    if (catalogue.skipped) return { step: "catalogue", ...catalogue };
+
+    await ctx.scheduler.runAfter(0, internal.platform.demoData.seedDemoBusiness, {
+      businessId,
+      days: args.days,
+    });
 
     return {
-      skipped: false,
-      categories: categoryCount,
-      products: productCount,
-      suppliers: SUPPLIERS.length,
+      step: "scheduled",
+      businessId,
+      catalogue,
+      note: "Trading history is running in the background — one mutation per simulated day. Check the Convex dashboard's Logs tab for progress; it takes under a minute for 90 days.",
     };
   },
 });
+
+export const seedCatalogue = internalMutation({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, args) => seedCatalogueFor(ctx, args.businessId),
+});
+
+/**
+ * The catalogue seed's body, factored out so `seedDemo` can call it in the
+ * same transaction as its own lookups rather than through a second scheduled
+ * hop — the whole catalogue insert is well within one mutation's budget,
+ * unlike the day-by-day trading history.
+ */
+async function seedCatalogueFor(ctx: MutationCtx, businessId: Id<"businesses">) {
+  const business = await ctx.db.get(businessId);
+  if (!business) throw new Error("Business not found");
+
+  // Refuse to touch a business that already has a catalogue.
+  const existing = await ctx.db
+    .query("products")
+    .withIndex("by_business", (q) => q.eq("businessId", businessId))
+    .first();
+  if (existing) {
+    return { skipped: true, reason: "This business already has products." };
+  }
+
+  const location = await ctx.db
+    .query("locations")
+    .withIndex("by_business", (q) => q.eq("businessId", businessId))
+    .first();
+  if (!location) throw new Error("Business has no location");
+
+  const owner = await ctx.db.get(business.ownerUserId);
+  if (!owner) throw new Error("Business has no owner");
+
+  for (const supplier of SUPPLIERS) {
+    await ctx.db.insert("suppliers", {
+      businessId: businessId,
+      name: supplier.name,
+      contactName: supplier.contactName,
+      phone: supplier.phone,
+      isActive: true,
+    });
+  }
+
+  let categoryCount = 0;
+  let productCount = 0;
+
+  for (const [index, group] of CATALOGUE.entries()) {
+    const categoryId = await ctx.db.insert("categories", {
+      businessId: businessId,
+      name: group.category,
+      sortOrder: index,
+      isActive: true,
+    });
+    categoryCount++;
+
+    for (const item of group.products) {
+      const productId = await ctx.db.insert("products", {
+        businessId: businessId,
+        name: item.name,
+        sku: item.sku,
+        barcode: item.barcode,
+        categoryId,
+        unit: item.unit,
+        costPriceMinor: item.cost,
+        sellingPriceMinor: item.price,
+        currency: business.currency,
+        taxRateId: business.settings.defaultTaxRateId,
+        trackInventory: true,
+        lowStockThreshold: item.lowStockThreshold,
+        isActive: true,
+      });
+      productCount++;
+
+      const threshold =
+        item.lowStockThreshold ?? business.settings.lowStockDefaultThreshold;
+
+      await seedStock(ctx, {
+        businessId: businessId,
+        locationId: location._id,
+        productId,
+        quantity: item.stock,
+        unitCostMinor: item.cost,
+        threshold,
+        actorUserId: owner._id,
+      });
+    }
+  }
+
+  return {
+    skipped: false,
+    categories: categoryCount,
+    products: productCount,
+    suppliers: SUPPLIERS.length,
+  };
+}
 
 /**
  * Opening stock, written as a ledger movement plus its projection — the same
