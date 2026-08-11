@@ -16,6 +16,24 @@ export function setup() {
   return convexTest(schema, modules);
 }
 
+/**
+ * Drain scheduled functions, including chains that schedule their own
+ * successor.
+ *
+ * `finishAllScheduledFunctions` returns after a bounded number of steps
+ * (~29 in practice), so a self-chaining job like the demo-data day loop stops
+ * partway through. Calling it repeatedly finishes the chain. This is a
+ * harness limitation only — a real deployment runs the chain to completion.
+ */
+export async function drainScheduler(
+  t: ReturnType<typeof setup>,
+  rounds = 12,
+): Promise<void> {
+  for (let i = 0; i < rounds; i++) {
+    await t.finishAllScheduledFunctions(() => {});
+  }
+}
+
 /** A signed-in identity, as Clerk would present it to Convex. */
 export function identity(subject: string, name: string, email?: string) {
   return { subject, name, email: email ?? `${subject}@example.test`, issuer: "test" };

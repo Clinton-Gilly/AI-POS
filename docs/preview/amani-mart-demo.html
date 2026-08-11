@@ -1,0 +1,547 @@
+<title>AI-POS — Amani Mart demo data</title>
+<style>
+:root {
+  --ground:#F7F8FA; --panel:#FFFFFF; --panel-2:#FBFCFD;
+  --ink:#10151C; --muted:#5B6673; --subtle:#8B95A1;
+  --line:#E3E7EC; --line-strong:#CBD2DA;
+  --brand:#2563EB; --series-cash:#2563EB; --series-mpesa:#00A878;
+  --good:#0F7B3F; --warn:#A15C00; --danger:#C02626;
+  --warn-bg:#FDF6EC; --danger-bg:#FDEDED; --good-bg:#EDF7F1; --brand-bg:#EEF3FE;
+  --shadow:0 1px 2px rgba(16,21,28,.06), 0 1px 12px rgba(16,21,28,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#0E1216; --panel:#171D24; --panel-2:#131920;
+    --ink:#EEF2F6; --muted:#A3AEBC; --subtle:#7B8695;
+    --line:#232C37; --line-strong:#33404F;
+    --brand:#5B96FF; --series-cash:#2563EB; --series-mpesa:#00A878;
+    --good:#3ECF7C; --warn:#E8A33D; --danger:#F2635C;
+    --warn-bg:#241C0E; --danger-bg:#2A1414; --good-bg:#0F2418; --brand-bg:#131E33;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#0E1216; --panel:#171D24; --panel-2:#131920;
+  --ink:#EEF2F6; --muted:#A3AEBC; --subtle:#7B8695;
+  --line:#232C37; --line-strong:#33404F;
+  --brand:#5B96FF; --series-cash:#2563EB; --series-mpesa:#00A878;
+  --good:#3ECF7C; --warn:#E8A33D; --danger:#F2635C;
+  --warn-bg:#241C0E; --danger-bg:#2A1414; --good-bg:#0F2418; --brand-bg:#131E33;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.55; -webkit-text-size-adjust:100%;
+}
+.wrap { max-width:760px; margin:0 auto; padding:28px 16px 72px; }
+.tab { font-variant-numeric:tabular-nums; }
+
+header.top { margin-bottom:28px; }
+.eyebrow { font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--subtle); font-weight:600; }
+h1 { font-size:26px; line-height:1.2; margin:.35em 0 .3em; letter-spacing:-.02em; text-wrap:balance; }
+.lede { color:var(--muted); margin:0; max-width:60ch; }
+
+.note {
+  margin-top:18px; padding:12px 14px; border-radius:10px;
+  background:var(--brand-bg); border:1px solid color-mix(in srgb, var(--brand) 22%, transparent);
+  font-size:13.5px; color:var(--ink);
+}
+.note b { font-weight:650; }
+
+section {
+  background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  margin-top:20px; box-shadow:var(--shadow); overflow:hidden;
+}
+.sec-head { padding:16px 18px 14px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; }
+.sec-head h2 { font-size:15px; margin:0; letter-spacing:-.01em; flex:1 1 auto; }
+.sec-head p { margin:4px 0 0; font-size:13px; color:var(--muted); flex:1 0 100%; }
+.body { padding:16px 18px; }
+.body.tight { padding:8px 0 0; }
+
+.status { font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+  padding:3px 8px; border-radius:999px; white-space:nowrap; }
+.s-built { background:var(--good-bg); color:var(--good); }
+.s-data  { background:var(--brand-bg); color:var(--brand); }
+.s-next  { background:var(--warn-bg); color:var(--warn); }
+
+.tiles { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); }
+@media (min-width:620px) { .tiles { grid-template-columns:repeat(4,1fr); } }
+.tile { background:var(--panel); padding:14px 16px; }
+.tile dt { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--subtle); font-weight:600; }
+.tile dd { margin:5px 0 0; font-size:20px; font-weight:650; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.tile .sub { font-size:12px; color:var(--muted); font-weight:400; letter-spacing:0; }
+.cur { font-size:12px; color:var(--subtle); font-weight:600; margin-right:2px; }
+
+figure { margin:0; }
+.chart-wrap { position:relative; overflow-x:auto; }
+svg.chart { display:block; width:100%; height:auto; min-width:320px; }
+.grid { stroke:var(--line); stroke-width:1; }
+.tick { fill:var(--subtle); font-size:10px; text-anchor:middle; font-family:inherit; }
+.area { fill:var(--brand); opacity:.13; }
+.line { fill:none; stroke:var(--brand); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+.endpoint { fill:var(--brand); stroke:var(--panel); stroke-width:2; }
+.cursor-line { stroke:var(--line-strong); stroke-width:1; stroke-dasharray:3 3; }
+.cursor-dot { fill:var(--brand); stroke:var(--panel); stroke-width:2; }
+
+.tip {
+  position:absolute; pointer-events:none; background:var(--panel); color:var(--ink);
+  border:1px solid var(--line-strong); border-radius:8px; padding:7px 10px; font-size:12px;
+  box-shadow:var(--shadow); white-space:nowrap; transform:translate(-50%,-115%); opacity:0; transition:opacity .1s;
+}
+.tip b { font-variant-numeric:tabular-nums; }
+
+.bar-row { display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:10px; padding:5px 0; }
+.bar-label { font-size:12px; color:var(--muted); }
+.bar-track { background:var(--ground); border-radius:3px; height:16px; overflow:hidden; }
+.bar-fill { display:block; height:100%; background:var(--brand); opacity:.42; border-radius:0 4px 4px 0; }
+.bar-row.peak .bar-fill { opacity:1; }
+.bar-row.peak .bar-label { color:var(--ink); font-weight:650; }
+.bar-value { font-size:12.5px; font-variant-numeric:tabular-nums; color:var(--muted); min-width:62px; text-align:right; }
+.bar-row.peak .bar-value { color:var(--ink); font-weight:650; }
+
+.mix { display:flex; height:26px; border-radius:6px; overflow:hidden; gap:2px; background:var(--panel); }
+.mix span { display:block; }
+.mix .cash { background:var(--series-cash); }
+.mix .mpesa { background:var(--series-mpesa); }
+.legend { display:flex; gap:16px; margin-top:10px; flex-wrap:wrap; font-size:13px; }
+.legend i { width:10px; height:10px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:baseline; }
+.legend .v { color:var(--muted); font-variant-numeric:tabular-nums; }
+
+table { width:100%; border-collapse:collapse; font-size:13.5px; }
+th { text-align:left; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--subtle);
+  font-weight:600; padding:8px 18px; border-bottom:1px solid var(--line); background:var(--panel-2); }
+td { padding:9px 18px; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:last-child td { border-bottom:0; }
+.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+th.num { text-align:right; }
+.strong { font-weight:650; }
+.muted { color:var(--muted); }
+.pos { color:var(--good); } .neg { color:var(--ink); }
+.pname { display:block; }
+.sku { display:block; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; color:var(--subtle); }
+.table-scroll { overflow-x:auto; }
+
+.chip { font-size:10.5px; padding:2px 7px; border-radius:999px; font-weight:600; letter-spacing:.03em; }
+.chip-sale { background:var(--brand-bg); color:var(--brand); }
+.chip-purchase { background:var(--good-bg); color:var(--good); }
+.chip-opening { background:var(--ground); color:var(--muted); }
+.chip-adjustment,.chip-waste { background:var(--warn-bg); color:var(--warn); }
+
+ul.lows { list-style:none; margin:0; padding:0; }
+.low { display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+.low:last-child { border-bottom:0; }
+.low-dot { width:7px; height:7px; border-radius:50%; background:var(--warn); flex:none; }
+.low.crit .low-dot { background:var(--danger); }
+.low-name { flex:1; }
+.low-qty { font-variant-numeric:tabular-nums; color:var(--muted); font-size:12.5px; }
+.low-th { color:var(--subtle); }
+
+.split { display:grid; gap:12px; }
+@media (min-width:620px) { .split { grid-template-columns:1fr 1fr; } }
+.pane { border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.pane-h { padding:9px 12px; font-size:12px; font-weight:650; border-bottom:1px solid var(--line); background:var(--panel-2); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.pane pre { margin:0; padding:12px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; line-height:1.6; overflow-x:auto; }
+.gone { color:var(--danger); font-weight:600; }
+.kept { color:var(--good); font-weight:600; }
+
+.receipt {
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; line-height:1.7;
+  background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; max-width:340px; margin:0 auto;
+}
+.r-center { text-align:center; }
+.r-name { font-weight:700; font-size:14px; letter-spacing:.06em; }
+.r-rule { border-top:1px dashed var(--line-strong); margin:9px 0; }
+.r-line { display:grid; grid-template-columns:1fr 26px 76px; gap:4px; }
+.r-qty { text-align:center; color:var(--muted); }
+.r-amt { text-align:right; font-variant-numeric:tabular-nums; }
+.r-tot { display:flex; justify-content:space-between; font-weight:700; }
+.r-sub { display:flex; justify-content:space-between; color:var(--muted); }
+.r-foot { text-align:center; color:var(--muted); font-size:11px; margin-top:6px; }
+
+.pos-demo { border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.pos-search { padding:10px 12px; border-bottom:1px solid var(--line); color:var(--subtle); font-size:13px; display:flex; gap:8px; align-items:center; background:var(--panel-2); }
+.pos-cart { padding:4px 12px; }
+.pos-line { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+.pos-line:last-child { border-bottom:0; }
+.pos-line .q { color:var(--muted); font-variant-numeric:tabular-nums; }
+.pos-total { display:flex; justify-content:space-between; padding:11px 12px; border-top:1px solid var(--line-strong); font-weight:700; background:var(--panel-2); }
+.pos-keys { display:flex; gap:6px; padding:10px 12px; border-top:1px solid var(--line); flex-wrap:wrap; }
+kbd { font-family:ui-monospace,monospace; font-size:11px; border:1px solid var(--line-strong); border-bottom-width:2px;
+  border-radius:4px; padding:2px 6px; color:var(--muted); background:var(--panel); }
+
+footer { margin-top:32px; color:var(--subtle); font-size:12.5px; text-align:center; }
+a { color:var(--brand); }
+:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+@media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">AI-POS · demo dataset</div>
+  <h1>Amani Mart — 90 days of trading</h1>
+  <p class="lede">One seeded business, generated by the real seed functions and read back through the
+  real queries. Every figure below came out of the system; none of it is illustrative.</p>
+  <div class="note">
+    <b>What this page is.</b> A preview of the built screens filled with the demo data, plus a sketch of
+    the till that Phase&nbsp;4 will build. It is not a screenshot of a running deployment — nothing has run
+    against live Convex or Clerk yet. Each section says which it is.
+  </div>
+</header>
+
+<section>
+  <div class="sec-head"><h2>The shop</h2><span class="status s-built">Built</span>
+  <p>Created through the onboarding wizard: currency, timezone, VAT and branding.</p></div>
+  <dl class="tiles">
+    <div class="tile"><dt>Products</dt><dd>71</dd></div>
+    <div class="tile"><dt>Categories</dt><dd>10</dd></div>
+    <div class="tile"><dt>Suppliers</dt><dd>4</dd></div>
+    <div class="tile"><dt>Customers</dt><dd>40</dd></div>
+  </dl>
+  <div class="body" style="border-top:1px solid var(--line)">
+    <p style="margin:0;font-size:13.5px;color:var(--muted)">
+      Kenya · KES · Africa/Nairobi · VAT 16% inclusive · alerts at each product's own reorder point
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Trading, last 90 days</h2><span class="status s-data">Data ready</span>
+  <p>The numbers exist and the queries return them. The dashboard that renders this is Phase&nbsp;5.</p></div>
+  <dl class="tiles">
+    <div class="tile"><dt>Revenue</dt><dd><span class="cur">KES</span>1,977,485</dd></div>
+    <div class="tile"><dt>Gross profit</dt><dd><span class="cur">KES</span>413,715<div class="sub">20.9% margin</div></dd></div>
+    <div class="tile"><dt>Transactions</dt><dd>3,711</dd></div>
+    <div class="tile"><dt>Average basket</dt><dd><span class="cur">KES</span>533</dd></div>
+  </dl>
+
+  <div class="body">
+    <figure>
+      <figcaption style="font-size:12.5px;color:var(--muted);margin-bottom:8px">
+        Daily revenue, KES — peak 52,870 · latest 18,340
+      </figcaption>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 700 200" role="img" aria-label="Daily revenue over 90 days">
+          <line x1="8" x2="692" y1="134.0" y2="134.0" class="grid"/><line x1="8" x2="692" y1="94.0" y2="94.0" class="grid"/><line x1="8" x2="692" y1="54.0" y2="54.0" class="grid"/><line x1="8" x2="692" y1="14.0" y2="14.0" class="grid"/>
+          <polygon class="area" points="8.0,174.0 8.0,115.3 15.7,86.1 23.4,103.8 31.1,93.5 38.7,149.7 46.4,113.9 54.1,111.7 61.8,127.6 69.5,118.5 77.2,82.6 84.9,79.6 92.5,136.6 100.2,108.5 107.9,129.6 115.6,104.7 123.3,98.0 131.0,63.4 138.7,14.0 146.3,134.5 154.0,139.6 161.7,98.5 169.4,114.1 177.1,101.7 184.8,106.2 192.4,90.2 200.1,137.5 207.8,140.0 215.5,109.7 223.2,126.5 230.9,105.3 238.6,92.0 246.2,54.6 253.9,126.0 261.6,125.4 269.3,90.0 277.0,111.2 284.7,93.3 292.4,105.1 300.0,60.7 307.7,143.7 315.4,115.2 323.1,113.5 330.8,134.9 338.5,109.5 346.2,110.7 353.8,70.6 361.5,139.3 369.2,105.5 376.9,100.5 384.6,111.2 392.3,82.4 400.0,80.9 407.6,62.8 415.3,141.0 423.0,134.2 430.7,143.3 438.4,116.3 446.1,103.3 453.8,119.5 461.4,54.9 469.1,131.2 476.8,140.7 484.5,124.3 492.2,106.5 499.9,108.8 507.6,98.9 515.2,87.8 522.9,118.3 530.6,128.6 538.3,103.9 546.0,131.3 553.7,124.5 561.3,80.9 569.0,59.0 576.7,132.6 584.4,130.3 592.1,125.1 599.8,108.2 607.5,97.8 615.1,45.5 622.8,68.5 630.5,128.7 638.2,119.7 645.9,101.1 653.6,116.5 661.3,117.0 668.9,111.2 676.6,97.2 684.3,120.3 692.0,118.5 692.0,174.0"/>
+          <polyline class="line" points="8.0,115.3 15.7,86.1 23.4,103.8 31.1,93.5 38.7,149.7 46.4,113.9 54.1,111.7 61.8,127.6 69.5,118.5 77.2,82.6 84.9,79.6 92.5,136.6 100.2,108.5 107.9,129.6 115.6,104.7 123.3,98.0 131.0,63.4 138.7,14.0 146.3,134.5 154.0,139.6 161.7,98.5 169.4,114.1 177.1,101.7 184.8,106.2 192.4,90.2 200.1,137.5 207.8,140.0 215.5,109.7 223.2,126.5 230.9,105.3 238.6,92.0 246.2,54.6 253.9,126.0 261.6,125.4 269.3,90.0 277.0,111.2 284.7,93.3 292.4,105.1 300.0,60.7 307.7,143.7 315.4,115.2 323.1,113.5 330.8,134.9 338.5,109.5 346.2,110.7 353.8,70.6 361.5,139.3 369.2,105.5 376.9,100.5 384.6,111.2 392.3,82.4 400.0,80.9 407.6,62.8 415.3,141.0 423.0,134.2 430.7,143.3 438.4,116.3 446.1,103.3 453.8,119.5 461.4,54.9 469.1,131.2 476.8,140.7 484.5,124.3 492.2,106.5 499.9,108.8 507.6,98.9 515.2,87.8 522.9,118.3 530.6,128.6 538.3,103.9 546.0,131.3 553.7,124.5 561.3,80.9 569.0,59.0 576.7,132.6 584.4,130.3 592.1,125.1 599.8,108.2 607.5,97.8 615.1,45.5 622.8,68.5 630.5,128.7 638.2,119.7 645.9,101.1 653.6,116.5 661.3,117.0 668.9,111.2 676.6,97.2 684.3,120.3 692.0,118.5"/>
+          <circle class="endpoint" cx="692.0" cy="118.5" r="4"/>
+          <line class="cursor-line" id="cur" x1="0" x2="0" y1="14" y2="174" style="opacity:0"/>
+          <circle class="cursor-dot" id="curdot" r="4" style="opacity:0"/>
+          <text x="8.0" y="192" class="tick">May</text><text x="154.0" y="192" class="tick">Jun</text><text x="384.6" y="192" class="tick">Jul</text><text x="622.8" y="192" class="tick">Aug</text>
+          <rect id="hit" x="8" y="14" width="684" height="160" fill="transparent"/>
+        </svg>
+        <div class="tip" id="tip"></div>
+      </div>
+    </figure>
+  </div>
+
+  <div class="body" style="border-top:1px solid var(--line)">
+    <figure>
+      <figcaption style="font-size:12.5px;color:var(--muted);margin-bottom:8px">
+        Revenue by day of week, KES — Saturday is the week's peak
+      </figcaption>
+      <div class="bar-row">
+<span class="bar-label">Mon</span>
+<span class="bar-track"><span class="bar-fill" style="width:46.9%"></span></span>
+<span class="bar-value">212,120</span>
+</div><div class="bar-row">
+<span class="bar-label">Tue</span>
+<span class="bar-track"><span class="bar-fill" style="width:53.8%"></span></span>
+<span class="bar-value">243,480</span>
+</div><div class="bar-row">
+<span class="bar-label">Wed</span>
+<span class="bar-track"><span class="bar-fill" style="width:53.9%"></span></span>
+<span class="bar-value">243,740</span>
+</div><div class="bar-row">
+<span class="bar-label">Thu</span>
+<span class="bar-track"><span class="bar-fill" style="width:66.9%"></span></span>
+<span class="bar-value">302,565</span>
+</div><div class="bar-row">
+<span class="bar-label">Fri</span>
+<span class="bar-track"><span class="bar-fill" style="width:77.5%"></span></span>
+<span class="bar-value">350,655</span>
+</div><div class="bar-row peak">
+<span class="bar-label">Sat</span>
+<span class="bar-track"><span class="bar-fill" style="width:100.0%"></span></span>
+<span class="bar-value">452,260</span>
+</div><div class="bar-row">
+<span class="bar-label">Sun</span>
+<span class="bar-track"><span class="bar-fill" style="width:38.2%"></span></span>
+<span class="bar-value">172,665</span>
+</div>
+    </figure>
+  </div>
+
+  <div class="body" style="border-top:1px solid var(--line)">
+    <figure>
+      <figcaption style="font-size:12.5px;color:var(--muted);margin-bottom:8px">How customers paid</figcaption>
+      <div class="mix" role="img" aria-label="Cash 55 percent, M-Pesa 45 percent">
+        <span class="cash" style="width:54.8%"></span>
+        <span class="mpesa" style="width:45.2%"></span>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--series-cash)"></i>Cash <span class="v">55% · 2,029 sales</span></span>
+        <span><i style="background:var(--series-mpesa)"></i>M-Pesa <span class="v">45% · 1,682 sales</span></span>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Products</h2><span class="status s-built">Built</span>
+  <p>The real page, with search, create and edit. Showing 10 of 71.</p></div>
+  <div class="table-scroll">
+    <table><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost</th><th class="num">Price</th></tr></thead>
+    <tbody><tr><td><span class="pname">Baby Porridge 400g</span><span class="sku">BB-PR-400</span></td>
+<td class="num">22</td>
+<td class="num">280.00</td>
+<td class="num strong">350.00</td></tr><tr><td><span class="pname">Baby Powder 200g</span><span class="sku">BB-PW-200</span></td>
+<td class="num">36</td>
+<td class="num">150.00</td>
+<td class="num strong">195.00</td></tr><tr><td><span class="pname">Baby Soap 100g</span><span class="sku">BB-SP-100</span></td>
+<td class="num">14</td>
+<td class="num">90.00</td>
+<td class="num strong">120.00</td></tr><tr><td><span class="pname">Bar Soap 800g</span><span class="sku">SP-BAR-800</span></td>
+<td class="num">11</td>
+<td class="num">160.00</td>
+<td class="num strong">200.00</td></tr><tr><td><span class="pname">Bathing Soap 125g</span><span class="sku">BS-125</span></td>
+<td class="num">34</td>
+<td class="num">65.00</td>
+<td class="num strong">90.00</td></tr><tr><td><span class="pname">Batteries AA (4)</span><span class="sku">BT-AA-4</span></td>
+<td class="num">22</td>
+<td class="num">100.00</td>
+<td class="num strong">140.00</td></tr><tr><td><span class="pname">Beans Rosecoco 1kg</span><span class="sku">BN-RSC-1</span></td>
+<td class="num">32</td>
+<td class="num">150.00</td>
+<td class="num strong">190.00</td></tr><tr><td><span class="pname">Biscuits 100g</span><span class="sku">BC-100</span></td>
+<td class="num">40</td>
+<td class="num">45.00</td>
+<td class="num strong">65.00</td></tr><tr><td><span class="pname">Bleach 750ml</span><span class="sku">BL-750</span></td>
+<td class="num">18</td>
+<td class="num">110.00</td>
+<td class="num strong">145.00</td></tr><tr><td><span class="pname">Body Lotion 400ml</span><span class="sku">BL-LOT-400</span></td>
+<td class="num">23</td>
+<td class="num">280.00</td>
+<td class="num strong">350.00</td></tr></tbody></table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>What a cashier sees</h2><span class="status s-built">Built</span>
+  <p>The same query, two roles. Cost price is removed at the repository, so it never reaches the browser.</p></div>
+  <div class="body">
+    <div class="split">
+      <div class="pane">
+        <div class="pane-h"><span>Owner</span><span class="kept">4 fields</span></div>
+        <pre>{
+ &quot;name&quot;: &quot;Baby Porridge 400g&quot;,
+ &quot;sku&quot;: &quot;BB-PR-400&quot;,
+ &quot;sellingPriceMinor&quot;: 35000,
+ &quot;costPriceMinor&quot;: 28000,
+ &quot;quantity&quot;: 22
+}</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-h"><span>Cashier</span><span class="gone">costPriceMinor absent</span></div>
+        <pre>{
+ &quot;name&quot;: &quot;Baby Porridge 400g&quot;,
+ &quot;sku&quot;: &quot;BB-PR-400&quot;,
+ &quot;sellingPriceMinor&quot;: 35000,
+ &quot;quantity&quot;: 22
+}</pre>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;color:var(--muted)">
+      Not a hidden column — the field is never serialised. Deleting that check fails four tests, one per read path.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Inventory</h2><span class="status s-built">Built</span>
+  <p>Stock value 262,890 at cost · 1,789 units on hand
+  · 1 at reorder point.</p></div>
+  <div class="body">
+    <ul class="lows"><li class="low">
+<span class="low-dot" aria-hidden="true"></span>
+<span class="low-name">Rice Pishori 1kg</span>
+<span class="low-qty">5 left <span class="low-th">/ alert 5</span></span></li></ul>
+  </div>
+  <div class="table-scroll" style="border-top:1px solid var(--line)">
+    <table><thead><tr><th>Movement</th><th>Type</th><th class="num">Change</th><th class="num">Balance</th></tr></thead>
+    <tbody><tr><td><span class="pname">Maize Flour 2kg</span><span class="sku">MF-2KG</span></td>
+<td><span class="chip chip-sale">sale</span></td>
+<td class="num neg">-1</td>
+<td class="num">20</td></tr><tr><td><span class="pname">Bleach 750ml</span><span class="sku">BL-750</span></td>
+<td><span class="chip chip-sale">sale</span></td>
+<td class="num neg">-1</td>
+<td class="num">18</td></tr><tr><td><span class="pname">Bread White 400g</span><span class="sku">BR-WHT-400</span></td>
+<td><span class="chip chip-sale">sale</span></td>
+<td class="num neg">-1</td>
+<td class="num">23</td></tr><tr><td><span class="pname">Maize Flour 2kg</span><span class="sku">MF-2KG</span></td>
+<td><span class="chip chip-sale">sale</span></td>
+<td class="num neg">-1</td>
+<td class="num">21</td></tr><tr><td><span class="pname">Drinking Chocolate 200g</span><span class="sku">DC-200</span></td>
+<td><span class="chip chip-sale">sale</span></td>
+<td class="num neg">-1</td>
+<td class="num">25</td></tr><tr><td><span class="pname">Maize Flour 1kg</span><span class="sku">MF-1KG</span></td>
+<td><span class="chip chip-sale">sale</span></td>
+<td class="num neg">-1</td>
+<td class="num">23</td></tr><tr><td><span class="pname">Broom</span><span class="sku">BM-STD</span></td>
+<td><span class="chip chip-sale">sale</span></td>
+<td class="num neg">-1</td>
+<td class="num">13</td></tr></tbody></table>
+  </div>
+  <div class="body" style="border-top:1px solid var(--line)">
+    <p style="margin:0;font-size:13px;color:var(--muted)">
+      Every change is a ledger row. Sales take stock out, deliveries put it back, and the running balance is
+      stored on each row — so <b>sum of movements equals the stock count</b>, checked nightly across all
+      3,711 sales in this dataset.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Best sellers</h2><span class="status s-data">Data ready</span>
+  <p>By revenue over the 90 days. Margin is owner-only.</p></div>
+  <div class="table-scroll">
+    <table><thead><tr><th>Product</th><th class="num">Sold</th><th class="num">Revenue</th><th class="num">Margin</th></tr></thead>
+    <tbody><tr><td><span class="pname">Maize Flour 2kg</span></td>
+<td class="num">930</td>
+<td class="num">195,300</td>
+<td class="num muted">19%</td></tr><tr><td><span class="pname">Cooking Gas Refill 6kg</span></td>
+<td class="num">94</td>
+<td class="num">131,600</td>
+<td class="num muted">14%</td></tr><tr><td><span class="pname">Eggs Tray (30)</span></td>
+<td class="num">181</td>
+<td class="num">90,500</td>
+<td class="num muted">16%</td></tr><tr><td><span class="pname">Wheat Flour 2kg</span></td>
+<td class="num">355</td>
+<td class="num">85,200</td>
+<td class="num muted">19%</td></tr><tr><td><span class="pname">Rice Basmati 1kg</span></td>
+<td class="num">271</td>
+<td class="num">75,880</td>
+<td class="num muted">21%</td></tr><tr><td><span class="pname">Rice Pishori 1kg</span></td>
+<td class="num">281</td>
+<td class="num">64,630</td>
+<td class="num muted">22%</td></tr></tbody></table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Customers</h2><span class="status s-data">Data ready</span>
+  <p>40 with purchase history. Loyalty points accrue at 1 per KES 100.</p></div>
+  <div class="table-scroll">
+    <table><thead><tr><th>Customer</th><th class="num">Visits</th><th class="num">Spend</th><th class="num">Points</th></tr></thead>
+    <tbody><tr><td><span class="pname">Robert Waweru</span><span class="sku">+2547568349</span></td>
+<td class="num">32</td>
+<td class="num strong">22,880</td>
+<td class="num muted">217</td></tr><tr><td><span class="pname">Isaac Kariuki</span><span class="sku">+2547585288</span></td>
+<td class="num">27</td>
+<td class="num strong">20,515</td>
+<td class="num muted">193</td></tr><tr><td><span class="pname">Daniel Ngugi</span><span class="sku">+2547831947</span></td>
+<td class="num">33</td>
+<td class="num strong">20,465</td>
+<td class="num muted">190</td></tr><tr><td><span class="pname">Joyce Atieno</span><span class="sku">+2547398622</span></td>
+<td class="num">29</td>
+<td class="num strong">20,070</td>
+<td class="num muted">188</td></tr><tr><td><span class="pname">Christine Auma</span><span class="sku">+2547551658</span></td>
+<td class="num">30</td>
+<td class="num strong">19,675</td>
+<td class="num muted">183</td></tr></tbody></table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>The till</h2><span class="status s-next">Phase 4 — not built</span>
+  <p>How selling will work. This is a sketch of intent, not a working screen.</p></div>
+  <div class="body">
+    <div class="pos-demo">
+      <div class="pos-search"><span>&#8981;</span><span>Scan a barcode or type a name…</span></div>
+      <div class="pos-cart">
+        <div class="pos-line"><span>Maize Flour 2kg</span><span class="q">2 × 210.00</span></div>
+        <div class="pos-line"><span>Milk 500ml</span><span class="q">3 × 70.00</span></div>
+        <div class="pos-line"><span>Bread White 400g</span><span class="q">1 × 70.00</span></div>
+      </div>
+      <div class="pos-total"><span>Total</span><span class="tab">KES 700.00</span></div>
+      <div class="pos-keys">
+        <kbd>F2</kbd> search <kbd>F4</kbd> discount <kbd>F8</kbd> pay <kbd>Enter</kbd> confirm
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;color:var(--muted)">
+      Cash and M-Pesa, split payment across both, and a queue that keeps selling when the internet drops —
+      cash only, syncing when it returns.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Receipt</h2><span class="status s-next">Phase 4 — not built</span>
+  <p>Rendered from a real seeded sale, AMAN-089023.</p></div>
+  <div class="body">
+    <div class="receipt">
+      <div class="r-center r-name">AMANI MART</div>
+      <div class="r-center" style="color:var(--muted);font-size:11px">Nairobi · 0722 000 111</div>
+      <div class="r-rule"></div>
+      <div style="color:var(--muted);font-size:11px">AMAN-089023 · 10 Aug 2026, 19:50</div>
+      <div class="r-rule"></div>
+      <div class="r-line"><span class="r-item">Maize Flour 1kg</span><span class="r-qty">1</span><span class="r-amt">115.00</span></div><div class="r-line"><span class="r-item">Milk 1L</span><span class="r-qty">1</span><span class="r-amt">130.00</span></div><div class="r-line"><span class="r-item">Groundnuts 100g</span><span class="r-qty">1</span><span class="r-amt">75.00</span></div><div class="r-line"><span class="r-item">Bathing Soap 125g</span><span class="r-qty">1</span><span class="r-amt">90.00</span></div><div class="r-line"><span class="r-item">Tea Bags (50)</span><span class="r-qty">1</span><span class="r-amt">230.00</span></div><div class="r-line"><span class="r-item">Maize Flour 2kg</span><span class="r-qty">3</span><span class="r-amt">630.00</span></div><div class="r-line"><span class="r-item">Cheese Slices 200g</span><span class="r-qty">3</span><span class="r-amt">1,170.00</span></div>
+      <div class="r-rule"></div>
+      <div class="r-sub"><span>VAT 16% (incl.)</span><span class="r-amt">336.54</span></div>
+      <div class="r-tot"><span>TOTAL</span><span class="r-amt">2,440.00</span></div>
+      <div class="r-sub"><span>CASH</span><span class="r-amt">2,450.00</span></div>
+      <div class="r-sub"><span>Change</span><span class="r-amt">10.00</span></div>
+      
+      <div class="r-foot">Thank you for shopping with us</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Generated from the seed functions in <code>convex/platform/</code> · 3,711 sales ·
+  8,056 lines · ledger verified balanced
+</footer>
+</div>
+
+<script>
+(function () {
+  var pts = [{"x": 8.0, "y": 115.3, "d": "2026-05-13", "r": 1939500, "c": 35}, {"x": 15.7, "y": 86.1, "d": "2026-05-14", "r": 2906000, "c": 47}, {"x": 23.4, "y": 103.8, "d": "2026-05-15", "r": 2319000, "c": 39}, {"x": 31.1, "y": 93.5, "d": "2026-05-16", "r": 2658500, "c": 53}, {"x": 38.7, "y": 149.7, "d": "2026-05-17", "r": 803000, "c": 21}, {"x": 46.4, "y": 113.9, "d": "2026-05-18", "r": 1987000, "c": 33}, {"x": 54.1, "y": 111.7, "d": "2026-05-19", "r": 2058500, "c": 40}, {"x": 61.8, "y": 127.6, "d": "2026-05-20", "r": 1533500, "c": 37}, {"x": 69.5, "y": 118.5, "d": "2026-05-21", "r": 1833000, "c": 39}, {"x": 77.2, "y": 82.6, "d": "2026-05-22", "r": 3020500, "c": 56}, {"x": 84.9, "y": 79.6, "d": "2026-05-23", "r": 3120500, "c": 57}, {"x": 92.5, "y": 136.6, "d": "2026-05-24", "r": 1237000, "c": 22}, {"x": 100.2, "y": 108.5, "d": "2026-05-25", "r": 2166000, "c": 32}, {"x": 107.9, "y": 129.6, "d": "2026-05-26", "r": 1467000, "c": 31}, {"x": 115.6, "y": 104.7, "d": "2026-05-27", "r": 2291500, "c": 35}, {"x": 123.3, "y": 98.0, "d": "2026-05-28", "r": 2511000, "c": 44}, {"x": 131.0, "y": 63.4, "d": "2026-05-29", "r": 3654500, "c": 70}, {"x": 138.7, "y": 14.0, "d": "2026-05-30", "r": 5287000, "c": 87}, {"x": 146.3, "y": 134.5, "d": "2026-05-31", "r": 1304500, "c": 27}, {"x": 154.0, "y": 139.6, "d": "2026-06-01", "r": 1136000, "c": 36}, {"x": 161.7, "y": 98.5, "d": "2026-06-02", "r": 2496000, "c": 50}, {"x": 169.4, "y": 114.1, "d": "2026-06-03", "r": 1978500, "c": 37}, {"x": 177.1, "y": 101.7, "d": "2026-06-04", "r": 2387500, "c": 39}, {"x": 184.8, "y": 106.2, "d": "2026-06-05", "r": 2240000, "c": 46}, {"x": 192.4, "y": 90.2, "d": "2026-06-06", "r": 2768000, "c": 53}, {"x": 200.1, "y": 137.5, "d": "2026-06-07", "r": 1204500, "c": 21}, {"x": 207.8, "y": 140.0, "d": "2026-06-08", "r": 1123000, "c": 33}, {"x": 215.5, "y": 109.7, "d": "2026-06-09", "r": 2124500, "c": 35}, {"x": 223.2, "y": 126.5, "d": "2026-06-10", "r": 1569500, "c": 33}, {"x": 230.9, "y": 105.3, "d": "2026-06-11", "r": 2271500, "c": 42}, {"x": 238.6, "y": 92.0, "d": "2026-06-12", "r": 2709500, "c": 45}, {"x": 246.2, "y": 54.6, "d": "2026-06-13", "r": 3947000, "c": 67}, {"x": 253.9, "y": 126.0, "d": "2026-06-14", "r": 1586000, "c": 22}, {"x": 261.6, "y": 125.4, "d": "2026-06-15", "r": 1606000, "c": 29}, {"x": 269.3, "y": 90.0, "d": "2026-06-16", "r": 2776500, "c": 37}, {"x": 277.0, "y": 111.2, "d": "2026-06-17", "r": 2074000, "c": 35}, {"x": 284.7, "y": 93.3, "d": "2026-06-18", "r": 2665000, "c": 34}, {"x": 292.4, "y": 105.1, "d": "2026-06-19", "r": 2276500, "c": 51}, {"x": 300.0, "y": 60.7, "d": "2026-06-20", "r": 3743000, "c": 68}, {"x": 307.7, "y": 143.7, "d": "2026-06-21", "r": 1002000, "c": 23}, {"x": 315.4, "y": 115.2, "d": "2026-06-22", "r": 1942000, "c": 33}, {"x": 323.1, "y": 113.5, "d": "2026-06-23", "r": 1999500, "c": 33}, {"x": 330.8, "y": 134.9, "d": "2026-06-24", "r": 1291500, "c": 35}, {"x": 338.5, "y": 109.5, "d": "2026-06-25", "r": 2131000, "c": 42}, {"x": 346.2, "y": 110.7, "d": "2026-06-26", "r": 2091500, "c": 50}, {"x": 353.8, "y": 70.6, "d": "2026-06-27", "r": 3415500, "c": 62}, {"x": 361.5, "y": 139.3, "d": "2026-06-28", "r": 1145000, "c": 25}, {"x": 369.2, "y": 105.5, "d": "2026-06-29", "r": 2263500, "c": 43}, {"x": 376.9, "y": 100.5, "d": "2026-06-30", "r": 2428000, "c": 38}, {"x": 384.6, "y": 111.2, "d": "2026-07-01", "r": 2074000, "c": 45}, {"x": 392.3, "y": 82.4, "d": "2026-07-02", "r": 3025500, "c": 57}, {"x": 400.0, "y": 80.9, "d": "2026-07-03", "r": 3075000, "c": 68}, {"x": 407.6, "y": 62.8, "d": "2026-07-04", "r": 3676000, "c": 69}, {"x": 415.3, "y": 141.0, "d": "2026-07-05", "r": 1089000, "c": 27}, {"x": 423.0, "y": 134.2, "d": "2026-07-06", "r": 1316000, "c": 29}, {"x": 430.7, "y": 143.3, "d": "2026-07-07", "r": 1015500, "c": 30}, {"x": 438.4, "y": 116.3, "d": "2026-07-08", "r": 1908000, "c": 42}, {"x": 446.1, "y": 103.3, "d": "2026-07-09", "r": 2335500, "c": 44}, {"x": 453.8, "y": 119.5, "d": "2026-07-10", "r": 1800500, "c": 42}, {"x": 461.4, "y": 54.9, "d": "2026-07-11", "r": 3934500, "c": 66}, {"x": 469.1, "y": 131.2, "d": "2026-07-12", "r": 1415500, "c": 28}, {"x": 476.8, "y": 140.7, "d": "2026-07-13", "r": 1101500, "c": 24}, {"x": 484.5, "y": 124.3, "d": "2026-07-14", "r": 1642500, "c": 33}, {"x": 492.2, "y": 106.5, "d": "2026-07-15", "r": 2232000, "c": 34}, {"x": 499.9, "y": 108.8, "d": "2026-07-16", "r": 2155500, "c": 46}, {"x": 507.6, "y": 98.9, "d": "2026-07-17", "r": 2480500, "c": 50}, {"x": 515.2, "y": 87.8, "d": "2026-07-18", "r": 2849500, "c": 58}, {"x": 522.9, "y": 118.3, "d": "2026-07-19", "r": 1839500, "c": 25}, {"x": 530.6, "y": 128.6, "d": "2026-07-20", "r": 1499000, "c": 26}, {"x": 538.3, "y": 103.9, "d": "2026-07-21", "r": 2315500, "c": 33}, {"x": 546.0, "y": 131.3, "d": "2026-07-22", "r": 1409500, "c": 34}, {"x": 553.7, "y": 124.5, "d": "2026-07-23", "r": 1634500, "c": 37}, {"x": 561.3, "y": 80.9, "d": "2026-07-24", "r": 3075500, "c": 55}, {"x": 569.0, "y": 59.0, "d": "2026-07-25", "r": 3800500, "c": 71}, {"x": 576.7, "y": 132.6, "d": "2026-07-26", "r": 1369500, "c": 25}, {"x": 584.4, "y": 130.3, "d": "2026-07-27", "r": 1444000, "c": 29}, {"x": 592.1, "y": 125.1, "d": "2026-07-28", "r": 1617000, "c": 36}, {"x": 599.8, "y": 108.2, "d": "2026-07-29", "r": 2173000, "c": 41}, {"x": 607.5, "y": 97.8, "d": "2026-07-30", "r": 2517000, "c": 56}, {"x": 615.1, "y": 45.5, "d": "2026-07-31", "r": 4247000, "c": 64}, {"x": 622.8, "y": 68.5, "d": "2026-08-01", "r": 3487500, "c": 64}, {"x": 630.5, "y": 128.7, "d": "2026-08-02", "r": 1496000, "c": 29}, {"x": 638.2, "y": 119.7, "d": "2026-08-03", "r": 1794000, "c": 31}, {"x": 645.9, "y": 101.1, "d": "2026-08-04", "r": 2407500, "c": 33}, {"x": 653.6, "y": 116.5, "d": "2026-08-05", "r": 1899500, "c": 32}, {"x": 661.3, "y": 117.0, "d": "2026-08-06", "r": 1883500, "c": 39}, {"x": 668.9, "y": 111.2, "d": "2026-08-07", "r": 2075500, "c": 46}, {"x": 676.6, "y": 97.2, "d": "2026-08-08", "r": 2538500, "c": 53}, {"x": 684.3, "y": 120.3, "d": "2026-08-09", "r": 1775000, "c": 28}, {"x": 692.0, "y": 118.5, "d": "2026-08-10", "r": 1834000, "c": 30}];
+  var svg = document.querySelector("svg.chart");
+  var hit = document.getElementById("hit");
+  var tip = document.getElementById("tip");
+  var cur = document.getElementById("cur");
+  var dot = document.getElementById("curdot");
+  if (!svg || !hit) return;
+
+  function show(evt) {
+    var box = svg.getBoundingClientRect();
+    var scale = 700 / box.width;
+    var x = (evt.clientX - box.left) * scale;
+    var best = pts[0], bd = Infinity;
+    for (var i = 0; i < pts.length; i++) {
+      var dx = Math.abs(pts[i].x - x);
+      if (dx < bd) { bd = dx; best = pts[i]; }
+    }
+    cur.setAttribute("x1", best.x); cur.setAttribute("x2", best.x);
+    cur.style.opacity = 1;
+    dot.setAttribute("cx", best.x); dot.setAttribute("cy", best.y);
+    dot.style.opacity = 1;
+    var d = new Date(best.d + "T00:00:00Z");
+    var label = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+    tip.innerHTML = label + " · <b>KES " + (best.r / 100).toLocaleString("en-KE", {maximumFractionDigits:0}) +
+      "</b> · " + best.c + " sales";
+    tip.style.left = (best.x / scale) + "px";
+    tip.style.top = (best.y / scale) + "px";
+    tip.style.opacity = 1;
+  }
+  function hide() {
+    tip.style.opacity = 0; cur.style.opacity = 0; dot.style.opacity = 0;
+  }
+  hit.addEventListener("pointermove", show);
+  hit.addEventListener("pointerdown", show);
+  hit.addEventListener("pointerleave", hide);
+})();
+</script>
