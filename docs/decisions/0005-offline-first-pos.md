@@ -30,8 +30,9 @@ Components:
 2. **Outbox.** A completed sale is written locally first with a
    client-generated UUID, then drained to the server in order on reconnect.
 3. **Idempotent replay.** That UUID is `sales.clientRequestId`, which carries a
-   unique index per business. Replaying an outbox entry after a flaky
-   reconnection cannot create a second sale.
+   checked inside the writing mutation, per business. Replaying an outbox
+   entry after a flaky reconnection cannot create a second sale, because
+   Convex mutations are serializable (see ADR-0003).
 4. **Cash only offline.** M-Pesa requires the network by definition.
 5. **Stock as projection, not reservation.** Offline stock counts are advisory.
    The server is authoritative at sync; oversells become reconciliation items

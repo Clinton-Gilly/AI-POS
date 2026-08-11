@@ -279,6 +279,17 @@ export default defineSchema({
     productId: v.id("products"),
     quantity: v.number(),
     reservedQuantity: v.number(),
+    /**
+     * The effective threshold, denormalised from the product (or the business
+     * default) when this row is written.
+     *
+     * Denormalised so that "what is low right now" is an indexed lookup rather
+     * than a scan that reads every product document to compare against its own
+     * threshold — that fan-out is what makes a low-stock dashboard widget
+     * quietly cost thousands of reads per page load.
+     */
+    lowStockThreshold: v.number(),
+    isLowStock: v.boolean(),
     updatedAt: v.number(),
   })
     .index("by_business_and_location_and_product", [
@@ -287,7 +298,7 @@ export default defineSchema({
       "productId",
     ])
     .index("by_business_and_product", ["businessId", "productId"])
-    .index("by_business_and_quantity", ["businessId", "quantity"]),
+    .index("by_business_and_low_stock", ["businessId", "isLowStock"]),
 
   /** Append-only ledger. Never updated, never deleted; corrections are compensating rows. */
   stockMovements: defineTable({

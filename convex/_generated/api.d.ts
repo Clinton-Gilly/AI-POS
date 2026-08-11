@@ -10,9 +10,16 @@
  */
 
 import type * as businesses from "../businesses.js";
+import type * as categories from "../categories.js";
+import type * as crons from "../crons.js";
 import type * as employees from "../employees.js";
+import type * as inventory from "../inventory.js";
 import type * as locations from "../locations.js";
+import type * as platform_maintenance from "../platform/maintenance.js";
 import type * as onboarding from "../onboarding.js";
+import type * as products from "../products.js";
+import type * as platform_seed from "../platform/seed.js";
+import type * as suppliers from "../suppliers.js";
 import type * as taxRates from "../taxRates.js";
 import type * as users from "../users.js";
 
@@ -28,9 +35,16 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
  */
 declare const fullApi: ApiFromModules<{
   businesses: typeof businesses;
+  categories: typeof categories;
+  crons: typeof crons;
   employees: typeof employees;
+  inventory: typeof inventory;
   locations: typeof locations;
+  "platform/maintenance": typeof platform_maintenance;
   onboarding: typeof onboarding;
+  products: typeof products;
+  "platform/seed": typeof platform_seed;
+  suppliers: typeof suppliers;
   taxRates: typeof taxRates;
   users: typeof users;
 }>;

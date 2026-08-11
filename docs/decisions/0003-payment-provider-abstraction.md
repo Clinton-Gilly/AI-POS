@@ -1,7 +1,22 @@
-# ADR-0003 — Payment provider abstraction with database-enforced idempotency
+# ADR-0003 — Payment provider abstraction with transactional idempotency
 
-**Status:** Proposed
+**Status:** Proposed — **amended 2026-08-11, see "Correction" below**
 **Date:** 2026-08-11
+
+> **Correction (Phase 3).** This ADR originally said idempotency was "enforced
+> by unique database index". **Convex has no unique indexes** — `index()` takes
+> no uniqueness option and nothing in the storage layer rejects a duplicate
+> key. The guarantee still holds, but the mechanism is different: Convex
+> mutations run at **serializable isolation under optimistic concurrency
+> control**, so a read-then-write check inside a mutation is safe. Two
+> concurrent callbacks that both read "no such event" conflict on commit; one
+> is retried, re-reads, and finds the committed row.
+>
+> This matters because the usual warning against read-then-write is correct
+> under weaker isolation, where check and insert can interleave. Under
+> serializable OCC they cannot. The rest of this ADR is unchanged; substitute
+> "a uniqueness check inside the mutation" wherever it says "unique index".
+> Implementation and the reasoning in full: `convex/lib/uniqueness.ts`.
 
 ## Context
 
@@ -16,8 +31,8 @@ prevented from corrupting sales.
 ## Decision
 
 A `PaymentProvider` interface with per-provider implementations behind a
-`PaymentService`, and **idempotency enforced by unique database index** rather
-than by application logic.
+`PaymentService`, and **idempotency enforced by a uniqueness check inside the
+writing mutation**, which Convex's serializable isolation makes safe.
 
 ```ts
 export interface PaymentProvider {
@@ -31,7 +46,9 @@ export interface PaymentProvider {
 Payment status is a full state machine:
 `pending · succeeded · failed · cancelled · timeout · reversed`.
 
-Two unique indexes carry the correctness burden:
+Two indexed lookups carry the correctness burden. They are not unique
+constraints — Convex has none — but each is read inside the mutation that
+writes, so serializable isolation makes the check-then-act safe:
 
 - `payments.by_business_and_idempotency_key` — a double-tapped or replayed
   initiation cannot create two payments.
@@ -48,25 +65,37 @@ The interface is deliberately narrow — initiate, parse callback, query status
 covers every asynchronous mobile-money rail, and cash implements it trivially
 by returning `succeeded` immediately.
 
-**On idempotency.** This is the part that is usually got wrong. The tempting
-implementation is:
+**On idempotency.** This is the part that is usually got wrong. In a typical
+SQL setup at read-committed or repeatable-read isolation, this is a bug:
 
 ```ts
 const existing = await findEvent(externalId);
-if (existing) return; // ← race window
+if (existing) return; // ← race window under weak isolation
 await processCallback(event);
 ```
 
 Between the read and the write, a second concurrent callback passes the same
-check. Under normal load this never fires; under a provider retry storm — which
+check. Under normal load it never fires; under a provider retry storm — which
 is exactly when duplicates arrive — it does, and the result is a double-credited
-sale. A unique index moves the decision into the database, where concurrent
-writers are serialised. The second write fails, and failing is the correct
-outcome.
+sale. There, the fix is to push the decision into the database with a unique
+constraint.
 
-The same reasoning applies to the client-generated `clientRequestId` on sales:
-it is the offline outbox's idempotency key, and a replayed sync cannot create a
-second sale because the index will not allow it.
+Convex closes the window differently, and the difference is why the code above
+is in fact correct here. Mutations run at **serializable isolation** under
+optimistic concurrency control: the read is part of the transaction, so a
+concurrent mutation committing a conflicting write causes this one to abort and
+retry. The retry re-reads, finds the row, and returns early. There is no
+interleaving left to exploit.
+
+The same reasoning covers the client-generated `clientRequestId` on sales — the
+offline outbox's idempotency key — and a payment's `idempotencyKey`. A replayed
+sync cannot create a second sale, because the check and the insert are one
+serializable unit.
+
+The constraint this imposes in practice: the check must happen **inside the
+mutation that writes**. Reading in a query and writing in a later mutation is a
+different shape, and an unsafe one, because that read is not part of the
+writing transaction.
 
 **On the state machine.** Every branch the brief lists — initiation, callback,
 success, failure, pending, timeout, duplicate, reconciliation — is a modelled
@@ -91,8 +120,10 @@ raises variances. Payments are never fire-and-forget.
 
 - More machinery than a direct M-Pesa integration would need on day one.
 - The state machine must be understood before touching payment code.
-- Unique-index violations must be handled as expected control flow, not as
-  unexpected errors.
+- Idempotency depends on Convex's serializable isolation rather than a
+  database constraint, so it is a property of _where_ the check runs. Moving a
+  check out of its writing mutation silently breaks it, which is harder to spot
+  in review than dropping a constraint would be.
 
 ## Non-negotiable
 
