@@ -91,6 +91,10 @@ both are recorded as ADRs:
 
 ## Getting started
 
+Cloning fresh? [`SETUP.md`](SETUP.md) walks the whole sequence step by step,
+including the parts below that are easy to get wrong — start there if this is
+your first time in the repo. The short version:
+
 ```bash
 npm install
 cp .env.example .env.local        # fill in your Convex and Clerk values

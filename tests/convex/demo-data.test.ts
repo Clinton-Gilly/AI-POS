@@ -233,3 +233,66 @@ describe("the demo trading history", () => {
     expect(otherSales).toHaveLength(0);
   });
 });
+
+describe("the one-shot demo entry point", () => {
+  it("finds the only business when none is named", async () => {
+    const result = await t.mutation(internal.platform.seed.seedDemo, {
+      days: TEST_DAYS,
+    });
+    expect(result.step).toBe("scheduled");
+    expect(result.businessId).toBe(amani.businessId);
+
+    await drainScheduler(t);
+
+    // Observable through the same public query a real client would use.
+    const levels = await asOwner().query(api.inventory.levels, {});
+    expect(levels.length).toBeGreaterThan(0);
+  });
+
+  it("refuses to guess when more than one business exists", async () => {
+    await seedBusiness(t, "jirani");
+
+    await expect(
+      t.mutation(internal.platform.seed.seedDemo, { days: TEST_DAYS }),
+    ).rejects.toThrow(/more than one business/i);
+  });
+
+  it("accepts an explicit businessId regardless of how many businesses exist", async () => {
+    const jirani = await seedBusiness(t, "jirani");
+
+    const result = await t.mutation(internal.platform.seed.seedDemo, {
+      businessId: jirani.businessId as never,
+      days: TEST_DAYS,
+    });
+    expect(result.step).toBe("scheduled");
+    expect(result.businessId).toBe(jirani.businessId);
+
+    await drainScheduler(t);
+
+    const jiraniSales = await t.run(async (ctx) =>
+      ctx.db
+        .query("sales")
+        .withIndex("by_business_and_completed_at", (q) =>
+          q.eq("businessId", jirani.businessId as never),
+        )
+        .collect(),
+    );
+    const amaniSales = await t.run(async (ctx) =>
+      ctx.db
+        .query("sales")
+        .withIndex("by_business_and_completed_at", (q) =>
+          q.eq("businessId", amani.businessId as never),
+        )
+        .collect(),
+    );
+    expect(jiraniSales.length).toBeGreaterThan(0);
+    expect(amaniSales).toHaveLength(0);
+  });
+
+  it("errors clearly when no business exists yet", async () => {
+    const empty = setup();
+    await expect(empty.mutation(internal.platform.seed.seedDemo, {})).rejects.toThrow(
+      /no business exists/i,
+    );
+  });
+});
