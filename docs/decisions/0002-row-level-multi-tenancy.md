@@ -51,12 +51,14 @@ circumvention shows up in review as a lint suppression.
 ## Consequences
 
 **Positive**
+
 - One schema, one migration path.
 - Instant onboarding; no per-tenant provisioning.
 - Cost structure compatible with SME pricing.
 - Cross-tenant platform analytics are straightforward.
 
 **Negative**
+
 - A bug in the choke point is a platform-wide incident rather than a
   single-tenant one — hence the disproportionate test coverage there.
 - No physical guarantee to offer a customer who contractually requires one.

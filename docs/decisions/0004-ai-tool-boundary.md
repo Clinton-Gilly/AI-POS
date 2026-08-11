@@ -50,14 +50,14 @@ questions the pre-loader did not anticipate.
 
 **Why tools work.** Three properties fall out of the design:
 
-1. *Tenancy cannot be forged.* Tools do not accept a `businessId` parameter. It
+1. _Tenancy cannot be forged._ Tools do not accept a `businessId` parameter. It
    comes from the executor's resolved context. A model hallucinating a tenant
    argument has nowhere to put it.
-2. *Permissions are structural.* `requiredPermission` is checked by the
+2. _Permissions are structural._ `requiredPermission` is checked by the
    executor before the handler runs. A cashier's assistant cannot call
    `get_profit_summary` — not because the prompt says not to, but because the
    call fails. Prompt instructions are not access control.
-3. *Answers are traceable.* Tool calls and results are persisted with every
+3. _Answers are traceable._ Tool calls and results are persisted with every
    message. Any figure on screen can be traced to the tool result that produced
    it, which is what makes the assistant auditable rather than merely plausible.
 
@@ -82,6 +82,7 @@ ordinary authorized service executes. The model never holds the verb.
 ## Consequences
 
 **Positive**
+
 - Tenant isolation and permissions hold even against a fully compromised prompt.
 - Every answer is traceable to its data.
 - Tools reuse existing services — no second data path to secure.
@@ -89,6 +90,7 @@ ordinary authorized service executes. The model never holds the verb.
   tool-calling formats.
 
 **Negative**
+
 - Only anticipated questions can be answered; new capabilities need new tools.
 - Multi-step reasoning costs multiple round trips.
 - The tool registry is a maintenance surface that must stay in step with

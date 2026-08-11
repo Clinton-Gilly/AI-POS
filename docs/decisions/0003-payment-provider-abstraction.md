@@ -53,7 +53,7 @@ implementation is:
 
 ```ts
 const existing = await findEvent(externalId);
-if (existing) return;              // ← race window
+if (existing) return; // ← race window
 await processCallback(event);
 ```
 
@@ -81,12 +81,14 @@ raises variances. Payments are never fire-and-forget.
 ## Consequences
 
 **Positive**
+
 - New rails are additive, one file each.
 - Duplicate and racing callbacks are impossible, not unlikely.
 - Every failure mode is an inspectable state.
 - Cash and mobile money share one code path, so split tender is free.
 
 **Negative**
+
 - More machinery than a direct M-Pesa integration would need on day one.
 - The state machine must be understood before touching payment code.
 - Unique-index violations must be handled as expected control flow, not as

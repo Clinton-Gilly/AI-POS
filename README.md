@@ -15,21 +15,24 @@ first-class support for M-Pesa, offline operation and multi-currency pricing.
 
 ## Status
 
-**Phase 1 — Architecture. Planning complete, implementation not started.**
+**Phase 2 — Foundation complete.** Tenancy, RBAC, authentication and
+onboarding are implemented and tested. There is no selling yet: products,
+the till and payments are Phase 3 and 4.
 
-This repository currently contains the architecture and implementation plan
-only. No application code has been written yet, by design: the specification
-calls for the architecture to be reviewed and approved before Phase 2
-(Foundation) begins.
+| Phase | Scope                                                          | Status         |
+| ----- | -------------------------------------------------------------- | -------------- |
+| 1     | Architecture & data model                                      | ✅ Complete    |
+| 2     | Foundation — Next.js, Convex, Clerk, tenancy, RBAC, onboarding | ✅ Complete    |
+| 3     | Products & inventory                                           | ⏳ Next        |
+| 4     | POS & payments (Cash, M-Pesa)                                  | ⏳ Not started |
+| 5     | Dashboard & reporting                                          | ⏳ Not started |
+| 6     | AI assistant & insights                                        | ⏳ Not started |
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| 1 | Architecture & data model | ✅ Complete (this repo) |
-| 2 | Foundation — Next.js, Convex, auth, RBAC, tenancy | ⏳ Awaiting approval |
-| 3 | Products & inventory | ⏳ Not started |
-| 4 | POS & payments (Cash, M-Pesa) | ⏳ Not started |
-| 5 | Dashboard & reporting | ⏳ Not started |
-| 6 | AI assistant & insights | ⏳ Not started |
+**Phase 2 exit criterion — met.** Two businesses exist; a user in business A
+cannot read or write any entity in business B, and a cashier is denied every
+owner-only permission. Proven by the cross-tenant matrix in
+[`tests/convex/tenancy.test.ts`](tests/convex/tenancy.test.ts), not by
+inspection. 66 tests pass.
 
 ---
 
@@ -37,16 +40,16 @@ calls for the architecture to be reviewed and approved before Phase 2
 
 Start here, in order:
 
-| Document | What it covers |
-| --- | --- |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System architecture — frontend, backend, database, auth, payments, AI, hosting, multi-tenancy |
-| [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Entities, relationships, indexes, tenancy keys |
-| [`docs/PROJECT-STRUCTURE.md`](docs/PROJECT-STRUCTURE.md) | Proposed folder structure and layering rules |
-| [`docs/MVP-SCOPE.md`](docs/MVP-SCOPE.md) | Explicit BUILD NOW vs BUILD LATER boundary |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Phased, testable implementation plan |
-| [`docs/RISKS.md`](docs/RISKS.md) | Technical risks and mitigations |
-| [`docs/SECURITY.md`](docs/SECURITY.md) | Security model, threat notes, non-negotiables |
-| [`docs/decisions/`](docs/decisions/) | Architecture Decision Records (ADRs) |
+| Document                                                 | What it covers                                                                                |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)           | System architecture — frontend, backend, database, auth, payments, AI, hosting, multi-tenancy |
+| [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md)               | Entities, relationships, indexes, tenancy keys                                                |
+| [`docs/PROJECT-STRUCTURE.md`](docs/PROJECT-STRUCTURE.md) | Proposed folder structure and layering rules                                                  |
+| [`docs/MVP-SCOPE.md`](docs/MVP-SCOPE.md)                 | Explicit BUILD NOW vs BUILD LATER boundary                                                    |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md)                     | Phased, testable implementation plan                                                          |
+| [`docs/RISKS.md`](docs/RISKS.md)                         | Technical risks and mitigations                                                               |
+| [`docs/SECURITY.md`](docs/SECURITY.md)                   | Security model, threat notes, non-negotiables                                                 |
+| [`docs/decisions/`](docs/decisions/)                     | Architecture Decision Records (ADRs)                                                          |
 
 The product specification this plan is derived from is
 _AI-Powered Customizable Point of Sale (POS) SaaS Platform_ (requirements
@@ -56,17 +59,17 @@ document, v1).
 
 ## Intended stack
 
-| Layer | Choice |
-| --- | --- |
-| Frontend | Next.js (App Router), TypeScript (strict), Tailwind CSS, shadcn/ui |
-| Backend | Next.js Route Handlers + Server Actions; Convex functions for data access |
-| Database | Convex (system of record for all tenant data) |
-| ORM | Drizzle — scoped to the optional Postgres analytics read-model only, **not** to OLTP ([ADR-0001](docs/decisions/0001-convex-as-system-of-record.md)) |
-| Auth | Clerk (identity) + Convex (tenancy & RBAC) |
-| Payments | Provider abstraction — Cash and M-Pesa Daraja in v1 |
-| AI | Provider abstraction over OpenAI, Google Gemini and Anthropic Claude, with server-side tool calling |
-| Hosting | Vercel (app) + Convex Cloud (data) |
-| Testing | Vitest (unit/integration), Playwright (E2E) |
+| Layer    | Choice                                                                                                                                               |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend | Next.js (App Router), TypeScript (strict), Tailwind CSS, shadcn/ui                                                                                   |
+| Backend  | Next.js Route Handlers + Server Actions; Convex functions for data access                                                                            |
+| Database | Convex (system of record for all tenant data)                                                                                                        |
+| ORM      | Drizzle — scoped to the optional Postgres analytics read-model only, **not** to OLTP ([ADR-0001](docs/decisions/0001-convex-as-system-of-record.md)) |
+| Auth     | Clerk (identity) + Convex (tenancy & RBAC)                                                                                                           |
+| Payments | Provider abstraction — Cash and M-Pesa Daraja in v1                                                                                                  |
+| AI       | Provider abstraction over OpenAI, Google Gemini and Anthropic Claude, with server-side tool calling                                                  |
+| Hosting  | Vercel (app) + Convex Cloud (data)                                                                                                                   |
+| Testing  | Vitest (unit/integration), Playwright (E2E)                                                                                                          |
 
 Two stack decisions in the brief needed resolution before implementation —
 both are recorded as ADRs:
@@ -83,18 +86,51 @@ both are recorded as ADRs:
 
 ## Getting started
 
-There is nothing to run yet. Once Phase 2 lands, the flow will be:
-
 ```bash
 npm install
-cp .env.example .env.local   # fill in your own values
-npx convex dev               # provisions a dev deployment, watches functions
-npm run dev                  # http://localhost:3000
+cp .env.example .env.local        # fill in your Convex and Clerk values
+
+npx convex dev                    # provisions a dev deployment, watches functions
+npm run dev                       # http://localhost:3000
 ```
+
+Two pieces of setup are easy to miss and both fail closed rather than loudly:
+
+1. **Clerk JWT template.** Create one named exactly `convex` in the Clerk
+   dashboard, then point the Convex deployment at its issuer:
+   `npx convex env set CLERK_JWT_ISSUER_DOMAIN https://<your-app>.clerk.accounts.dev`.
+   Without it, `ctx.auth.getUserIdentity()` returns null and every tenant
+   function refuses with `UNAUTHENTICATED`.
+2. **Environment variables** are validated by Zod at boot, so a missing secret
+   stops the app starting instead of surfacing at a customer's first payment.
 
 Secrets are never committed. `.env.example` documents every variable the
 platform reads; see [`docs/SECURITY.md`](docs/SECURITY.md) for the rules on
 which are server-only.
+
+### Commands
+
+| Command             | Does                                            |
+| ------------------- | ----------------------------------------------- |
+| `npm run dev`       | Next.js dev server                              |
+| `npm run convex`    | Convex dev deployment + codegen watcher         |
+| `npm test`          | Vitest — unit and Convex integration suites     |
+| `npm run typecheck` | `tsc --noEmit`                                  |
+| `npm run lint`      | ESLint, including the tenancy and secrets rules |
+| `npm run verify`    | typecheck + lint + tests, as CI runs them       |
+
+### How the guardrails are enforced
+
+Two ESLint rules do work that review alone would eventually miss:
+
+- **Raw `ctx.db` is banned outside `convex/model/` and `convex/lib/`.** Tenant
+  scoping lives in the repository layer, so a query cannot quietly skip it.
+  ([ADR-0002](docs/decisions/0002-row-level-multi-tenancy.md))
+- **`process.env` is banned outside `src/config/env.ts`**, so no secret escapes
+  boot-time validation or reaches a client bundle.
+  ([`docs/SECURITY.md` §5](docs/SECURITY.md))
+
+A suppression of either is a review blocker, not a workaround.
 
 ---
 

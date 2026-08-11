@@ -8,10 +8,10 @@
 
 The brief specifies both Convex as "the primary database and backend data
 platform" and Drizzle ORM "where relational/database access is required", and
-then instructs: *"Before implementing the database layer, determine which parts
+then instructs: _"Before implementing the database layer, determine which parts
 of the stack should be handled directly by Convex and which parts should use
 Drizzle. Do not force Drizzle into places where it conflicts with Convex's
-architecture."*
+architecture."_
 
 They conflict at the foundation. Drizzle is a typed SQL query builder for
 Postgres, MySQL and SQLite. Convex is a document database with its own
@@ -31,7 +31,7 @@ Postgres, Drizzle for access, and build realtime and reactivity by hand.
 ## Decision
 
 **Option A.** Convex is the system of record for all tenant application data.
-Drizzle is retained but scoped to a *future, optional* Postgres analytics
+Drizzle is retained but scoped to a _future, optional_ Postgres analytics
 read-model, populated asynchronously from Convex. Nothing in v1 depends on it.
 
 ## Rationale
@@ -74,6 +74,7 @@ queries off the transactional path.
 ## Consequences
 
 **Positive**
+
 - Atomic sales are platform behaviour, not application code.
 - Realtime is a subscription, not a subsystem.
 - No connection pooling, no migration tooling, no ORM/serverless impedance.
@@ -81,6 +82,7 @@ queries off the transactional path.
 - Analytics can be added later without disturbing OLTP.
 
 **Negative**
+
 - Managed-platform dependency. Self-hosting or a data-residency requirement
   would force migration.
 - Smaller ecosystem than Postgres; fewer off-the-shelf answers.

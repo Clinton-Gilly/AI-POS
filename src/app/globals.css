@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/**
+ * Design tokens.
+ *
+ * `--brand-*` is deliberately separate from the neutral palette: it is
+ * overridden per business at the layout boundary from the tenant's branding
+ * record, so no component ever branches on which business it is rendering.
+ * Everything else stays constant so the UI reads as one product regardless of
+ * a shop's colour choice.
+ */
+@theme {
+  --color-brand: var(--brand-primary, #1f6feb);
+  --color-brand-strong: var(--brand-secondary, #0b3b8c);
+  --color-brand-foreground: #ffffff;
+
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f6f7f9;
+  --color-surface-raised: #ffffff;
+
+  --color-ink: #10151c;
+  --color-ink-muted: #5b6673;
+  --color-ink-subtle: #8b95a1;
+
+  --color-line: #e3e7ec;
+  --color-line-strong: #cbd2da;
+
+  --color-positive: #0f7b3f;
+  --color-warning: #a15c00;
+  --color-danger: #c02626;
+
+  --radius-control: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-surface: #10151c;
+    --color-surface-sunken: #0b0f14;
+    --color-surface-raised: #171e27;
+
+    --color-ink: #eef2f6;
+    --color-ink-muted: #a3aebc;
+    --color-ink-subtle: #7b8695;
+
+    --color-line: #232c37;
+    --color-line-strong: #33404f;
+
+    --color-positive: #3ecf7c;
+    --color-warning: #e8a33d;
+    --color-danger: #f2635c;
+  }
+}
+
+html {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Money and quantities must align vertically in tables and on receipts. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The till is used by keyboard. Focus must always be unmistakable. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}

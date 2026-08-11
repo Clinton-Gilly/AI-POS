@@ -19,8 +19,8 @@ Options for identity: Clerk, Convex Auth, Auth.js, or build it.
 
 **Clerk for identity. Convex for tenancy and authorization.**
 
-Clerk answers *who is this person*. Convex answers *what may they do, in which
-business*. The boundary is deliberate.
+Clerk answers _who is this person_. Convex answers _what may they do, in which
+business_. The boundary is deliberate.
 
 ## Rationale
 
@@ -41,7 +41,7 @@ tablet on a shop counter that can be stolen.
 and the temptation is real. Rejected for two reasons:
 
 1. It puts authorization state in a vendor we may replace. Migrating identity
-   is a contained problem; migrating identity *and* the entire tenancy and
+   is a contained problem; migrating identity _and_ the entire tenancy and
    permission model is not.
 2. It models the domain badly. A cashier may work at two shops with different
    permissions in each, and a business needs custom roles beyond a fixed set.
@@ -56,12 +56,14 @@ every authorization check are untouched.
 ## Consequences
 
 **Positive**
+
 - Phone OTP and 2FA on day one, correctly implemented.
 - Session and device management provided.
 - Authorization stays in our schema, testable and versioned with the code.
 - Multi-business membership is modelled properly.
 
 **Negative**
+
 - A third managed dependency alongside Convex and Vercel.
 - Per-MAU cost that grows with cashier headcount, not just customer count —
   worth watching against subscription pricing.
@@ -70,7 +72,7 @@ every authorization check are untouched.
 
 ## Notes
 
-- Terminal PINs are a convenience layer *within* an authenticated session, never
+- Terminal PINs are a convenience layer _within_ an authenticated session, never
   a substitute for one. Argon2id-hashed, rate-limited, lockout after repeated
   failures.
 - 2FA is available from v1 but owner-configurable rather than mandatory:

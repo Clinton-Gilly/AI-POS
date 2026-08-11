@@ -5,8 +5,8 @@
 
 ## Context
 
-Requirement 6.1: *"The POS should continue working without internet. When
-connection returns: data synchronizes automatically."* One sentence, and the
+Requirement 6.1: _"The POS should continue working without internet. When
+connection returns: data synchronizes automatically."_ One sentence, and the
 largest engineering item in the document.
 
 Convex keeps a connected client fast through a reactive cache, but that cache
@@ -76,12 +76,14 @@ make sensible decisions. One who discovers the outage at close of day cannot.
 ## Consequences
 
 **Positive**
+
 - Trading continues through outages, which is the requirement.
 - Idempotency is enforced by index, so replays are safe by construction.
 - Small enough to build in Phase 4 rather than becoming its own project.
 - The outbox also insulates against platform outages, not just local ones.
 
 **Negative**
+
 - No offline mobile money — a real limitation to state plainly to customers.
 - Offline stock can go stale; oversells are possible and must be reconciled.
 - Multi-device offline is unsupported in v1.
