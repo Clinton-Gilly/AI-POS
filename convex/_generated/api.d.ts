@@ -15,6 +15,7 @@ import type * as crons from "../crons.js";
 import type * as employees from "../employees.js";
 import type * as inventory from "../inventory.js";
 import type * as locations from "../locations.js";
+import type * as platform_demoData from "../platform/demoData.js";
 import type * as platform_maintenance from "../platform/maintenance.js";
 import type * as onboarding from "../onboarding.js";
 import type * as products from "../products.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   employees: typeof employees;
   inventory: typeof inventory;
   locations: typeof locations;
+  "platform/demoData": typeof platform_demoData;
   "platform/maintenance": typeof platform_maintenance;
   onboarding: typeof onboarding;
   products: typeof products;
