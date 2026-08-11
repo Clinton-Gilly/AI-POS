@@ -15,24 +15,29 @@ first-class support for M-Pesa, offline operation and multi-currency pricing.
 
 ## Status
 
-**Phase 2 — Foundation complete.** Tenancy, RBAC, authentication and
-onboarding are implemented and tested. There is no selling yet: products,
-the till and payments are Phase 3 and 4.
+**Phase 3 — Products & inventory complete.** The catalogue, the stock ledger
+and supplier records are implemented and tested. There is no selling yet: the
+till and payments are Phase 4.
 
 | Phase | Scope                                                          | Status         |
 | ----- | -------------------------------------------------------------- | -------------- |
 | 1     | Architecture & data model                                      | ✅ Complete    |
 | 2     | Foundation — Next.js, Convex, Clerk, tenancy, RBAC, onboarding | ✅ Complete    |
-| 3     | Products & inventory                                           | ⏳ Next        |
-| 4     | POS & payments (Cash, M-Pesa)                                  | ⏳ Not started |
+| 3     | Products & inventory                                           | ✅ Complete    |
+| 4     | POS & payments (Cash, M-Pesa)                                  | ⏳ Next        |
 | 5     | Dashboard & reporting                                          | ⏳ Not started |
 | 6     | AI assistant & insights                                        | ⏳ Not started |
 
-**Phase 2 exit criterion — met.** Two businesses exist; a user in business A
-cannot read or write any entity in business B, and a cashier is denied every
-owner-only permission. Proven by the cross-tenant matrix in
-[`tests/convex/tenancy.test.ts`](tests/convex/tenancy.test.ts), not by
-inspection. 66 tests pass.
+**Exit criteria met, proven by test rather than inspection — 116 tests pass.**
+
+- _Phase 2._ Two businesses exist; a user in business A cannot read or write
+  any entity in business B, and a cashier is denied every owner-only
+  permission. See [`tests/convex/tenancy.test.ts`](tests/convex/tenancy.test.ts).
+- _Phase 3._ `sum(stockMovements) == inventoryLevels.quantity` holds after
+  every operation, an adjustment updates ledger and level atomically or not at
+  all, and cost price is absent from every payload a cashier session receives.
+  See [`tests/convex/inventory.test.ts`](tests/convex/inventory.test.ts) and
+  [`catalogue.test.ts`](tests/convex/catalogue.test.ts).
 
 ---
 

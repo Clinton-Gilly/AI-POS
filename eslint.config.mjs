@@ -18,16 +18,30 @@ const eslintConfig = [
   /**
    * ADR-0002: tenant isolation is structural, not conventional.
    *
-   * Raw `ctx.db` access is confined to the repository layer (`convex/model/`)
-   * and the tenancy primitives themselves (`convex/lib/`). Everywhere else,
-   * data access goes through a repository, which is where `businessId` scoping
-   * lives. A query written without a tenant filter is the leak this rule
-   * exists to prevent — and a suppression of this rule is a review blocker,
-   * not a workaround.
+   * Raw `ctx.db` access is confined to three places:
+   *
+   *   convex/model/     the repository layer, where businessId scoping lives
+   *   convex/lib/       the tenancy primitives themselves
+   *   convex/platform/  internalMutations that legitimately operate across
+   *                     every business — reconciliation and seeding. These are
+   *                     unreachable from any client, and the directory name is
+   *                     the point: cross-tenant code lives here and only here,
+   *                     so a new file appearing in it is a signal to review it
+   *                     closely.
+   *
+   * Everywhere else, data access goes through a repository. A query written
+   * without a tenant filter is the leak this rule exists to prevent — and a
+   * per-file suppression is a review blocker, not a workaround, which is why
+   * the exemption is a directory rather than a growing ignore list.
    */
   {
     files: ["convex/**/*.ts"],
-    ignores: ["convex/model/**", "convex/lib/**", "convex/_generated/**"],
+    ignores: [
+      "convex/model/**",
+      "convex/lib/**",
+      "convex/platform/**",
+      "convex/_generated/**",
+    ],
     rules: {
       "no-restricted-syntax": [
         "error",

@@ -45,9 +45,10 @@ callback. Naive handlers double-credit sales or mark unpaid sales as paid.
 
 **Mitigation.** Every failure branch is a modelled state
 (`pending · succeeded · failed · cancelled · timeout · reversed`). Duplicate
-suppression is a **unique index** on `(provider, externalId)`, so a duplicate
-that races an in-flight callback loses at the database level rather than in an
-`if`. Raw payloads are persisted before parsing. Timeouts trigger scheduled STK
+suppression checks `(provider, externalId)` **inside the writing mutation**;
+because Convex mutations are serializable, a duplicate racing an in-flight
+callback aborts on commit and its retry takes the already-handled branch.
+Convex has no unique indexes — see the correction at the top of ADR-0003. Raw payloads are persisted before parsing. Timeouts trigger scheduled STK
 status queries with backoff and a manual-review flag. A daily reconciliation
 job compares our payments against provider records and raises variances. There
 is no code path that marks a payment succeeded without verified provider

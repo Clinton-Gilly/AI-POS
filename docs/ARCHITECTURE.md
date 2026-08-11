@@ -351,8 +351,8 @@ Cashier taps "M-Pesa"
    ├─◀ Daraja POSTs the callback → /api/payments/mpesa/callback
    │      • provider IP allowlist + unguessable path token
    │      • raw body persisted to paymentEvents before any parsing
-   │      • unique index on (provider, externalId) → duplicate callbacks are
-   │        recorded and then ignored, not reprocessed
+   │      • (provider, externalId) checked inside the writing mutation →
+   │        duplicates are recorded and ignored, not reprocessed
    │      • single mutation: mark payment succeeded + complete the sale
    │
    └─▶ Timeout path (~60s, no callback):
@@ -367,8 +367,10 @@ Every branch the brief lists is a real state in the model:
 
 - Secrets are server-side only. Consumer key, secret, passkey and shortcode
   never enter a client bundle.
-- Idempotency is enforced by unique index, not by an `if` statement — a
-  duplicate callback that races an in-flight one loses at the database level.
+- Idempotency is enforced inside the writing mutation, where Convex's
+  serializable isolation means a duplicate racing an in-flight callback loses
+  on commit and is retried into the already-handled branch. (Convex has no
+  unique indexes; see ADR-0003.)
 - No fake success. There is no code path that marks a payment succeeded without
   a verified provider confirmation, in any environment. The sandbox is
   configured by environment variable; the logic is identical.
