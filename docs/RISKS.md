@@ -251,9 +251,9 @@ becomes a cost problem rather than after.
 
 ## Risks accepted
 
-| Accepted | Rationale |
-| --- | --- |
-| Shared database rather than per-tenant databases | Isolation guaranteed by enforcement + tests; per-tenant databases make migrations and SME pricing unworkable. Revisit for a contractual data-residency requirement |
-| Managed platform dependency (Convex, Clerk, Vercel) | Correct trade for time-to-market at this stage. Repository and provider abstractions bound the cost of replacing any one of them |
-| Single-device offline only in v1 | Covers the real failure mode — intermittent internet at one till. Multi-device offline convergence is disproportionate work for the MVP |
-| English-only UI at launch | i18n wired from day one; adding Swahili is translation work, not refactoring |
+| Accepted                                            | Rationale                                                                                                                                                          |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Shared database rather than per-tenant databases    | Isolation guaranteed by enforcement + tests; per-tenant databases make migrations and SME pricing unworkable. Revisit for a contractual data-residency requirement |
+| Managed platform dependency (Convex, Clerk, Vercel) | Correct trade for time-to-market at this stage. Repository and provider abstractions bound the cost of replacing any one of them                                   |
+| Single-device offline only in v1                    | Covers the real failure mode — intermittent internet at one till. Multi-device offline convergence is disproportionate work for the MVP                            |
+| English-only UI at launch                           | i18n wired from day one; adding Swahili is translation work, not refactoring                                                                                       |

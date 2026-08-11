@@ -70,11 +70,11 @@ The third is the client's job and is handled by a local-first outbox
 
 Two rendering postures, chosen per surface rather than globally:
 
-| Surface | Posture | Why |
-| --- | --- | --- |
-| Dashboard, reports, settings, product/customer lists | React Server Components; data fetched server-side | Reads dominate, payloads are large, no interactivity budget to protect |
-| POS terminal (`/pos`) | Client Component shell with a local store, hydrated once | Must respond in <100ms per keystroke and must work with no network |
-| Realtime widgets (stock counters, live sales feed) | Client Components on Convex subscriptions | Push updates without polling |
+| Surface                                              | Posture                                                  | Why                                                                    |
+| ---------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Dashboard, reports, settings, product/customer lists | React Server Components; data fetched server-side        | Reads dominate, payloads are large, no interactivity budget to protect |
+| POS terminal (`/pos`)                                | Client Component shell with a local store, hydrated once | Must respond in <100ms per keystroke and must work with no network     |
+| Realtime widgets (stock counters, live sales feed)   | Client Components on Convex subscriptions                | Push updates without polling                                           |
 
 **Design direction.** The UI targets a cashier working a queue and an owner who
 is not technical. That means: dense over airy, keyboard-first, high contrast,
@@ -100,15 +100,15 @@ locale to a prepared one is not.
 
 Next.js is the application layer. Convex is the data layer. The split:
 
-| Concern | Lives in | Reason |
-| --- | --- | --- |
-| Transactional business logic (sales, stock, refunds) | Convex mutations | Needs the transaction boundary |
-| Reads for UI | Convex queries | Reactive, tenant-checked |
-| Third-party calls (M-Pesa, AI providers, SMS) | Convex actions | Non-transactional, can await network |
-| Inbound webhooks | Next.js Route Handlers | Need raw body access, custom headers, provider IP checks |
-| AI response streaming | Next.js Route Handler | Streams tokens to the browser |
-| Form submissions from RSC pages | Server Actions | Thin — validate, call service, revalidate |
-| Scheduled work (reconciliation, digests, alerts) | Convex cron + scheduler | Runs next to the data, no separate worker |
+| Concern                                              | Lives in                | Reason                                                   |
+| ---------------------------------------------------- | ----------------------- | -------------------------------------------------------- |
+| Transactional business logic (sales, stock, refunds) | Convex mutations        | Needs the transaction boundary                           |
+| Reads for UI                                         | Convex queries          | Reactive, tenant-checked                                 |
+| Third-party calls (M-Pesa, AI providers, SMS)        | Convex actions          | Non-transactional, can await network                     |
+| Inbound webhooks                                     | Next.js Route Handlers  | Need raw body access, custom headers, provider IP checks |
+| AI response streaming                                | Next.js Route Handler   | Streams tokens to the browser                            |
+| Form submissions from RSC pages                      | Server Actions          | Thin — validate, call service, revalidate                |
+| Scheduled work (reconciliation, digests, alerts)     | Convex cron + scheduler | Runs next to the data, no separate worker                |
 
 **Layering rule, enforced in review:** business logic never lives in a route
 handler, a Server Action or a React component.
@@ -159,13 +159,13 @@ where POS systems typically leak.
 
 ### On Drizzle
 
-The brief specifies Drizzle ORM and also instructs: *"Do not force Drizzle into
-places where it conflicts with Convex's architecture."* They conflict directly.
+The brief specifies Drizzle ORM and also instructs: _"Do not force Drizzle into
+places where it conflicts with Convex's architecture."_ They conflict directly.
 Drizzle is a SQL query builder for Postgres/MySQL/SQLite; Convex is a document
 database with its own transactional runtime and no SQL surface. There is no
 seam where Drizzle can sit on top of Convex.
 
-**Resolution:** Convex owns OLTP. Drizzle is retained for a *later, optional*
+**Resolution:** Convex owns OLTP. Drizzle is retained for a _later, optional_
 Postgres analytics read-model — the place where it is genuinely the right tool,
 because long-range reporting over millions of sale lines wants SQL window
 functions and columnar scans, not document reads. Nothing in v1 depends on it.
@@ -222,15 +222,21 @@ un-bypassable rather than merely conventional.
      input: async (ctx) => {
        const identity = await ctx.auth.getUserIdentity();
        if (!identity) throw new AppError("UNAUTHENTICATED");
-       const { user, business, membership, role } =
-         await resolveActiveContext(ctx, identity.subject);
-       return { ctx: { ...ctx, tenant: { user, business, membership, role } }, args: {} };
+       const { user, business, membership, role } = await resolveActiveContext(
+         ctx,
+         identity.subject,
+       );
+       return {
+         ctx: { ...ctx, tenant: { user, business, membership, role } },
+         args: {},
+       };
      },
    });
    ```
 
    A function written with `tenantQuery`/`tenantMutation` cannot see another
    tenant's rows without a deliberate, reviewable act.
+
 5. A lint rule bans raw `ctx.db` outside `convex/lib/`, and the test suite
    includes a cross-tenant matrix: for every tenant-scoped function, business A
    attempting to read or write business B's entity must fail closed.
@@ -251,7 +257,7 @@ authentication, session management and device revocation. Convex verifies
 Clerk's JWT on every function call.
 
 The split matters: **Clerk answers "who is this person", Convex answers "what
-may they do here".** Tenancy and roles deliberately do *not* live in Clerk
+may they do here".** Tenancy and roles deliberately do _not_ live in Clerk
 Organizations — that would put authorization state in a vendor we may replace,
 and it does not model a cashier who works at two shops with different
 permissions in each.
@@ -277,26 +283,26 @@ if (user.role === "owner" || user.role === "manager") { … }
 
 Seeded system roles (a business may later define custom ones):
 
-| Permission | Owner | Manager | Cashier |
-| --- | :-: | :-: | :-: |
-| `sales:create` | ✅ | ✅ | ✅ |
-| `sales:refund` | ✅ | ✅ | — |
-| `sales:discount` (within cap) | ✅ | ✅ | ✅ |
-| `sales:discount:override` (above cap) | ✅ | ✅ | — |
-| `products:read` | ✅ | ✅ | ✅ |
-| `products:write` | ✅ | ✅ | — |
-| `inventory:read` | ✅ | ✅ | ✅ |
-| `inventory:adjust` | ✅ | ✅ | — |
-| `suppliers:manage` | ✅ | ✅ | — |
-| `customers:read` / `customers:write` | ✅ | ✅ | ✅ |
-| `reports:operational:read` | ✅ | ✅ | — |
-| `reports:financial:read` | ✅ | — | — |
-| `employees:manage` | ✅ | — | — |
-| `roles:manage` | ✅ | — | — |
-| `settings:write` | ✅ | — | — |
-| `subscription:manage` | ✅ | — | — |
-| `ai:query` | ✅ | ✅ | — |
-| `audit:read` | ✅ | — | — |
+| Permission                            | Owner | Manager | Cashier |
+| ------------------------------------- | :---: | :-----: | :-----: |
+| `sales:create`                        |  ✅   |   ✅    |   ✅    |
+| `sales:refund`                        |  ✅   |   ✅    |    —    |
+| `sales:discount` (within cap)         |  ✅   |   ✅    |   ✅    |
+| `sales:discount:override` (above cap) |  ✅   |   ✅    |    —    |
+| `products:read`                       |  ✅   |   ✅    |   ✅    |
+| `products:write`                      |  ✅   |   ✅    |    —    |
+| `inventory:read`                      |  ✅   |   ✅    |   ✅    |
+| `inventory:adjust`                    |  ✅   |   ✅    |    —    |
+| `suppliers:manage`                    |  ✅   |   ✅    |    —    |
+| `customers:read` / `customers:write`  |  ✅   |   ✅    |   ✅    |
+| `reports:operational:read`            |  ✅   |   ✅    |    —    |
+| `reports:financial:read`              |  ✅   |    —    |    —    |
+| `employees:manage`                    |  ✅   |    —    |    —    |
+| `roles:manage`                        |  ✅   |    —    |    —    |
+| `settings:write`                      |  ✅   |    —    |    —    |
+| `subscription:manage`                 |  ✅   |    —    |    —    |
+| `ai:query`                            |  ✅   |   ✅    |    —    |
+| `audit:read`                          |  ✅   |    —    |    —    |
 
 The requirement "cashiers cannot access profit reports" is satisfied
 structurally: cost price and margin are stripped from payloads at the
@@ -307,8 +313,8 @@ reaches the browser. Hiding a nav link is not access control.
 
 ## 7. Payments
 
-Payments are abstracted from the first commit. The POS knows about *taking a
-payment*, never about M-Pesa.
+Payments are abstracted from the first commit. The POS knows about _taking a
+payment_, never about M-Pesa.
 
 ```
               PaymentService
@@ -374,7 +380,7 @@ Every branch the brief lists is a real state in the model:
 
 ## 8. AI architecture
 
-Two layers: a provider abstraction, and a tool layer that is the *only* path
+Two layers: a provider abstraction, and a tool layer that is the _only_ path
 from a model to business data.
 
 ```
@@ -424,8 +430,8 @@ Every call runs the full chain:
 AI ─▶ Tool ─▶ Authorization ─▶ Tenant-scoped data ─▶ AI response
 ```
 
-The authorization step is not advisory. Tools execute with the *requesting
-user's* context; a cashier's assistant literally cannot call
+The authorization step is not advisory. Tools execute with the _requesting
+user's_ context; a cashier's assistant literally cannot call
 `get_profit_summary`, and a model that hallucinates a `businessId` argument
 gets nowhere because tools do not accept one.
 
@@ -494,11 +500,11 @@ monitoring (Sentry) is wired in Phase 2, not bolted on before launch.
 
 ## 11. Hosting and deployment
 
-| Environment | App | Data |
-| --- | --- | --- |
-| Local | `next dev` | `convex dev` |
-| Preview | Vercel preview per PR | Convex preview deployment |
-| Production | Vercel production | Convex production |
+| Environment | App                   | Data                      |
+| ----------- | --------------------- | ------------------------- |
+| Local       | `next dev`            | `convex dev`              |
+| Preview     | Vercel preview per PR | Convex preview deployment |
+| Production  | Vercel production     | Convex production         |
 
 Vercel for the app; Convex Cloud for data, with the deployment region chosen
 for East African latency. Preview deployments get isolated Convex deployments

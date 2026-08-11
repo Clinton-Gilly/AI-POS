@@ -34,7 +34,7 @@ Clerk JWT on every function call — there is no unauthenticated path to tenant
 data.
 
 **Terminal PINs.** Shops share a till, and staff switch between sales. A short
-PIN allows fast switching *within an already-authenticated device session* — it
+PIN allows fast switching _within an already-authenticated device session_ — it
 is a convenience layer over a real session, never a substitute for one. PINs
 are Argon2id-hashed, rate-limited, and lock out after repeated failures.
 
@@ -50,8 +50,8 @@ Server-side, permission-based, checked at the data boundary.
 
 ```ts
 // Every tenant-scoped function begins here.
-const ctx = await requireTenantContext();          // server-derived, never client input
-requirePermission(ctx, "reports:financial:read");  // throws AppError("FORBIDDEN")
+const ctx = await requireTenantContext(); // server-derived, never client input
+requirePermission(ctx, "reports:financial:read"); // throws AppError("FORBIDDEN")
 ```
 
 **Sensitive fields are stripped at the repository, not hidden in the UI.**
@@ -88,10 +88,10 @@ All credentials come from environment variables, validated by Zod at boot in
 loudly at deploy is strictly better than failing at a customer's first M-Pesa
 payment.
 
-| Exposure | Variables |
-| --- | --- |
-| Server only | `MPESA_*`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `CLERK_SECRET_KEY`, `MPESA_CALLBACK_TOKEN` |
-| Public (`NEXT_PUBLIC_*`) | Convex URL, Clerk publishable key, app URL |
+| Exposure                 | Variables                                                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Server only              | `MPESA_*`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `CLERK_SECRET_KEY`, `MPESA_CALLBACK_TOKEN` |
+| Public (`NEXT_PUBLIC_*`) | Convex URL, Clerk publishable key, app URL                                                                     |
 
 Anything not explicitly in the public row is server-only. Only
 `config/env.ts` reads `process.env`; a secret referenced anywhere else is a
@@ -132,15 +132,15 @@ on quantities and amounts, and enum validation on every status field.
 
 ## 8. Rate limiting
 
-| Surface | Reason |
-| --- | --- |
-| Auth attempts, PIN attempts | Credential stuffing, PIN brute force |
-| Payment initiation | Cost, and STK-push spam to customer phones |
-| AI endpoints | Direct financial cost per request |
-| Webhooks | Flooding |
-| Search | Expensive query abuse |
+| Surface                     | Reason                                     |
+| --------------------------- | ------------------------------------------ |
+| Auth attempts, PIN attempts | Credential stuffing, PIN brute force       |
+| Payment initiation          | Cost, and STK-push spam to customer phones |
+| AI endpoints                | Direct financial cost per request          |
+| Webhooks                    | Flooding                                   |
+| Search                      | Expensive query abuse                      |
 
-Limits are per tenant *and* per user — a single compromised cashier account
+Limits are per tenant _and_ per user — a single compromised cashier account
 must not exhaust a business's AI budget.
 
 ---
